@@ -14,14 +14,9 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
       {required LoadModelOptions loadModelOptions}) async {
     print(
         "Loading model: ${loadModelOptions.model} with input precision: ${loadModelOptions.inputPrecision}");
-    var assetFileName = ModelsUtil().getModelPath(loadModelOptions.model,
-        loadModelOptions.inputPrecision, ModelFormat.onnx);
-    final rawAssetFile = await rootBundle.load(assetFileName);
-    final bytes = rawAssetFile.buffer.asUint8List();
 
-    OrtEnv.instance.init();
-    final sessionOptions = OrtSessionOptions();
-    final session = OrtSession.fromBuffer(bytes, sessionOptions);
+    final session = await _getOrtSessionAsync(loadModelOptions);
+
     final runOptions = OrtRunOptions();
 
     var ttt = await _getInputs(
@@ -73,6 +68,42 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
         avgPerformanceTimeMs: sum / ttt.length,
         fastestTimeMs: fastestTimeMs,
         slowestTimeMs: slowestTimeMs);
+  }
+
+  Future<OrtSession> _getOrtSessionAsync(
+      LoadModelOptions loadModelOptions) async {
+    var assetFileName = ModelsUtil().getModelPath(loadModelOptions.model,
+        loadModelOptions.inputPrecision, ModelFormat.onnx);
+    final rawAssetFile = await rootBundle.load(assetFileName);
+    final bytes = rawAssetFile.buffer.asUint8List();
+
+    OrtEnv.instance.init();
+    final sessionOptions = _getOrtSessionOptions(loadModelOptions);
+
+    final session = OrtSession.fromBuffer(bytes, sessionOptions);
+    return session;
+  }
+
+  OrtSessionOptions _getOrtSessionOptions(LoadModelOptions loadModelOptions) {
+    var sessionOptions = OrtSessionOptions();
+
+    switch (loadModelOptions.delegate) {
+      case DelegateOption.coreML:
+        sessionOptions.appendCoreMLProvider(CoreMLFlags.useNone);
+        break;
+      case DelegateOption.nnapi:
+        sessionOptions.appendNnapiProvider(NnapiFlags.useNone);
+        break;
+      case DelegateOption.xxnpack:
+        sessionOptions.appendXnnpackProvider();
+        break;
+      case DelegateOption.cpu:
+        sessionOptions.appendCPUProvider(CPUFlags.useNone);
+        break;
+      default:
+        throw Exception("Unknown delegate");
+    }
+    return sessionOptions;
   }
 
   Future<List<Map<String, OrtValue>>> _getInputs(

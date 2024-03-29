@@ -106,10 +106,7 @@ class TFLitePerformanceTester extends PerformanceTester {
     print(
         "Loading model: ${options.model} with input precision: ${options.inputPrecision}");
 
-    // needed delegate, coreML, nnapi or gpu // ..addDelegate(CoreMlDelegate())
-    var interPreterOptions = InterpreterOptions()
-      ..useMetalDelegateForIOS = true
-      ..useNnApiForAndroid = true;
+    var interPreterOptions = _getInterpreterOptions(options);
 
     var modelPath = ModelsUtil().getModelPath(
         options.model, options.inputPrecision, ModelFormat.tflite);
@@ -125,5 +122,27 @@ class TFLitePerformanceTester extends PerformanceTester {
     await Future.delayed(const Duration(seconds: 1));
 
     return isolateInterpreter;
+  }
+
+  InterpreterOptions _getInterpreterOptions(LoadModelOptions loadModelOptions) {
+    var interPreterOptions = InterpreterOptions();
+
+    // needed delegate, coreML, nnapi or gpu // ..addDelegate(CoreMlDelegate())
+    if (loadModelOptions.delegate == DelegateOption.coreML) {
+      interPreterOptions.addDelegate(CoreMlDelegate());
+    } else if (loadModelOptions.delegate == DelegateOption.nnapi) {
+      interPreterOptions.useNnApiForAndroid = true;
+    } else if (loadModelOptions.delegate == DelegateOption.metal) {
+      interPreterOptions.useMetalDelegateForIOS = true;
+    } else if (loadModelOptions.delegate == DelegateOption.gpu) {
+      interPreterOptions.addDelegate(GpuDelegate());
+    } else if (loadModelOptions.delegate == DelegateOption.xxnpack) {
+      interPreterOptions.addDelegate(XNNPackDelegate());
+    } else if (loadModelOptions.delegate == DelegateOption.cpu) {
+    } else {
+      throw Exception("Unknown delegate");
+    }
+
+    return interPreterOptions;
   }
 }

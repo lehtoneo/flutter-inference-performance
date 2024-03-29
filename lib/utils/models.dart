@@ -6,11 +6,17 @@ enum InputPrecision { uint8, float32 }
 
 enum ModelFormat { tflite, onnx }
 
+enum DelegateOption { coreML, nnapi, gpu, metal, cpu, xxnpack }
+
 class LoadModelOptions {
   final Model model;
   final InputPrecision inputPrecision;
+  final DelegateOption delegate;
 
-  LoadModelOptions({required this.model, required this.inputPrecision});
+  LoadModelOptions(
+      {required this.model,
+      required this.inputPrecision,
+      required this.delegate});
 }
 
 class ModelsUtil {
