@@ -73,13 +73,15 @@ class ResultSender {
   }
 
   Future sendSSDMobileNetResultsAsync(
-      SendResultsApiOptions<List<List<double>>> options) async {
-    return await _sendResultsAsync("$_baseUrl/ssd-mobilenet", options);
+      SendResultsOptions<dynamic> options) async {
+    var apiOptions = SendResultsApiOptions<dynamic>(options: options);
+    return await _sendResultsAsync("$_baseUrl/ssd-mobilenet", apiOptions);
   }
 
   Future sendDeepLabV3ResultsAsync(
-      SendResultsApiOptions<List<double>> options) async {
-    return await _sendResultsAsync("$_baseUrl/deeplabv3", options);
+      SendResultsOptions<List<List<num>>> options) async {
+    var apiOptions = SendResultsApiOptions<List<List<num>>>(options: options);
+    return await _sendResultsAsync("$_baseUrl/deeplabv3", apiOptions);
   }
 
   Future _sendResultsAsync(String uri, SendResultsApiOptions options) async {

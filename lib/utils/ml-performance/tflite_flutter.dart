@@ -11,15 +11,24 @@ import 'package:tflite_flutter/tflite_flutter.dart';
 enum TFLiteDelegate { coreML, nnapi, gpu, cpu }
 
 class TFLitePerformanceTester extends PerformanceTester {
+  dynamic _inputs;
+  LoadModelOptions? _prevLoadModelOptions;
+
   @override
   Future<MLInferencePerformanceResult> testPerformance({
     required LoadModelOptions loadModelOptions,
   }) async {
     var interpreter = await _loadTFLiteModel(loadModelOptions);
-    // create array of [224, 224, 3]
-    final inputs = await _getFormattedImageData(
-        model: loadModelOptions.model,
-        inputPrecision: loadModelOptions.inputPrecision);
+
+    // cache inputs if the same model is used
+    final inputs = _prevLoadModelOptions == loadModelOptions
+        ? _inputs
+        : await _getFormattedImageData(
+            model: loadModelOptions.model,
+            inputPrecision: loadModelOptions.inputPrecision);
+
+    _prevLoadModelOptions = loadModelOptions;
+    _inputs = inputs;
 
     var output = _getOutPutTensor(
         loadModelOptions.model, loadModelOptions.inputPrecision);
@@ -31,6 +40,7 @@ class TFLitePerformanceTester extends PerformanceTester {
     ResultSender resultSender = ResultSender();
 
     var i = 0;
+    var resultsId = DateTime.now().millisecondsSinceEpoch.toString();
     for (var input in inputs) {
       var startTime = DateTime.now();
       await interpreter.runForMultipleInputs([
@@ -40,10 +50,42 @@ class TFLitePerformanceTester extends PerformanceTester {
 
       var timeMs = endTime.difference(startTime).inMilliseconds;
 
-      if (loadModelOptions.model == Model.mobilenet_edgetpu) {
+      if (loadModelOptions.model == Model.mobilenet_edgetpu ||
+          loadModelOptions.model == Model.mobilenet) {
         await resultSender.sendMobileNetResultsAsync(
             SendResultsOptions<List<num>>(
-                resultsId: "k",
+                resultsId: resultsId,
+                inputIndex: i,
+                precision: loadModelOptions.inputPrecision,
+                library: "tflite",
+                output: output[0][0],
+                inferenceTimeMs: timeMs.toDouble(),
+                model: loadModelOptions.model,
+                delegate: loadModelOptions.delegate));
+      }
+
+      if (loadModelOptions.model == Model.ssd_mobilenet) {
+        await resultSender.sendSSDMobileNetResultsAsync(
+            SendResultsOptions<dynamic>(
+                resultsId: resultsId,
+                inputIndex: i,
+                precision: loadModelOptions.inputPrecision,
+                library: "tflite",
+                output: [
+                  output[0][0][0],
+                  output[1][0],
+                  output[2][0],
+                  output[3]
+                ],
+                inferenceTimeMs: timeMs.toDouble(),
+                model: loadModelOptions.model,
+                delegate: loadModelOptions.delegate));
+      }
+
+      if (loadModelOptions.model == Model.deeplabv3) {
+        await resultSender.sendDeepLabV3ResultsAsync(
+            SendResultsOptions<List<List<num>>>(
+                resultsId: resultsId,
                 inputIndex: i,
                 precision: loadModelOptions.inputPrecision,
                 library: "tflite",
@@ -105,15 +147,19 @@ class TFLitePerformanceTester extends PerformanceTester {
     required Model model,
     required InputPrecision inputPrecision,
   }) async {
+    print("Fetching data for model: ${model.name}");
     var options =
         FetchImageDataOptions(amount: 20, dataset: getModelDataSet(model));
 
     var data = await DataService().fetchImageData(options: options);
+    print("Data fetched");
 
     var inputShape = getInputShape(model);
 
     var precisionData = formatImageDataToPrecision(data, inputPrecision);
     var reshaped = precisionData.map((e) => e.reshape(inputShape)).toList();
+
+    print("Data formatted");
     return reshaped;
   }
 

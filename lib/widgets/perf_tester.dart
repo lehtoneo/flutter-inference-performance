@@ -35,8 +35,6 @@ class _PerformanceTesterWidgetState extends State<PerformanceTesterWidget> {
       _error = null;
     });
 
-    var result = await performanceTester.testPerformance(
-        loadModelOptions: _loadModelOptions);
     try {
       var result = await performanceTester.testPerformance(
           loadModelOptions: _loadModelOptions);

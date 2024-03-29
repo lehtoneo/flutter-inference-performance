@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:inference_test/utils/ml-performance/common.dart';
+import 'package:inference_test/utils/results.dart';
 import 'package:onnxruntime/onnxruntime.dart';
 import 'package:inference_test/utils/data.dart';
 import 'package:inference_test/utils/models.dart';
@@ -30,6 +31,9 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
     var sum = 0.0;
 
     print("Running inference");
+    var resultSender = ResultSender();
+    var i = 0;
+    var resultsId = DateTime.now().millisecondsSinceEpoch.toString();
     for (var data in ttt) {
       var inputOrt = data;
       print("run");
@@ -39,6 +43,56 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
       var end = DateTime.now();
 
       var timeMs = end.difference(start).inMilliseconds;
+
+      if (loadModelOptions.model == Model.mobilenet_edgetpu ||
+          loadModelOptions.model == Model.mobilenet) {
+        print(outputs?[0]?.value);
+        dynamic o = outputs?[0]?.value;
+        await resultSender.sendMobileNetResultsAsync(
+            SendResultsOptions<List<num>>(
+                resultsId: resultsId,
+                inputIndex: i,
+                precision: loadModelOptions.inputPrecision,
+                library: "onnxruntime",
+                output: o[0],
+                inferenceTimeMs: timeMs.toDouble(),
+                model: loadModelOptions.model,
+                delegate: loadModelOptions.delegate));
+      }
+
+      if (loadModelOptions.model == Model.ssd_mobilenet) {
+        dynamic o0 = outputs?[0]?.value;
+        dynamic o1 = outputs?[1]?.value;
+        dynamic o2 = outputs?[2]?.value;
+        dynamic o3 = outputs?[3]?.value;
+
+        await resultSender.sendSSDMobileNetResultsAsync(
+            SendResultsOptions<dynamic>(
+                resultsId: resultsId,
+                inputIndex: i,
+                precision: loadModelOptions.inputPrecision,
+                library: "tflite",
+                output: [o0[0][0], o1[0], o2[0], o3],
+                inferenceTimeMs: timeMs.toDouble(),
+                model: loadModelOptions.model,
+                delegate: loadModelOptions.delegate));
+      }
+
+      if (loadModelOptions.model == Model.deeplabv3) {
+        print(outputs?[0]?.value);
+        dynamic o = outputs?[0]?.value;
+        await resultSender.sendDeepLabV3ResultsAsync(
+            SendResultsOptions<List<List<num>>>(
+                resultsId: resultsId,
+                inputIndex: i,
+                precision: loadModelOptions.inputPrecision,
+                library: "onnxruntime",
+                output: o[0],
+                inferenceTimeMs: timeMs.toDouble(),
+                model: loadModelOptions.model,
+                delegate: loadModelOptions.delegate));
+      }
+
       print(timeMs);
       if (timeMs < fastestTimeMs) {
         fastestTimeMs = timeMs.toDouble();
@@ -55,6 +109,7 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
       for (var output in outputs ?? []) {
         output?.release();
       }
+      i++;
     }
 
     print("Inference ready");
