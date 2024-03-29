@@ -88,7 +88,7 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
     var sessionOptions = OrtSessionOptions();
 
     switch (loadModelOptions.delegate) {
-      case DelegateOption.coreML:
+      case DelegateOption.core_ml:
         sessionOptions.appendCoreMLProvider(CoreMLFlags.useNone);
         break;
       case DelegateOption.nnapi:

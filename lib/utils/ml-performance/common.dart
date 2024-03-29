@@ -3,9 +3,9 @@ import 'package:inference_test/utils/models.dart';
 
 DataSet getModelDataSet(Model model) {
   switch (model) {
-    case Model.mobilenet_edgetpu || Model.mobilenetv2:
+    case Model.mobilenet_edgetpu || Model.mobilenet:
       return DataSet.imagenet;
-    case Model.ssdMobileNet:
+    case Model.ssd_mobilenet:
       return DataSet.coco;
     case Model.deeplabv3:
       return DataSet.ade20k;
@@ -16,9 +16,9 @@ DataSet getModelDataSet(Model model) {
 
 List<int> getInputShape(Model model) {
   switch (model) {
-    case Model.mobilenet_edgetpu || Model.mobilenetv2:
+    case Model.mobilenet_edgetpu || Model.mobilenet:
       return [224, 224, 3];
-    case Model.ssdMobileNet:
+    case Model.ssd_mobilenet:
       return [300, 300, 3];
     case Model.deeplabv3:
       return [512, 512, 3];

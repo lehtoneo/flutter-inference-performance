@@ -1,12 +1,15 @@
 import 'package:tflite_flutter/tflite_flutter.dart';
 
-enum Model { mobilenetv2, mobilenet_edgetpu, ssdMobileNet, deeplabv3 }
+enum Model { mobilenet, mobilenet_edgetpu, ssd_mobilenet, deeplabv3 }
 
-enum InputPrecision { uint8, float32 }
+enum InputPrecision {
+  uint8,
+  float32,
+}
 
 enum ModelFormat { tflite, onnx }
 
-enum DelegateOption { coreML, nnapi, gpu, metal, cpu, xxnpack }
+enum DelegateOption { core_ml, nnapi, gpu, metal, cpu, xxnpack }
 
 class LoadModelOptions {
   final Model model;
@@ -47,11 +50,11 @@ class ModelsUtil {
     var precision = _getInputPrecisionString(inputPrecision);
     var modelFormat = _getModelFormatString(format);
     switch (model) {
-      case Model.mobilenetv2:
+      case Model.mobilenet:
         return 'assets/$modelFormat/mobilenetv2_$precision.$modelFormat';
       case Model.mobilenet_edgetpu:
         return 'assets/$modelFormat/mobilenet_edgetpu_224_1.0_$precision.$modelFormat';
-      case Model.ssdMobileNet:
+      case Model.ssd_mobilenet:
         return 'assets/$modelFormat/ssd_mobilenet_v2_300_$precision.$modelFormat';
       case Model.deeplabv3:
         return 'assets/$modelFormat/deeplabv3_mnv2_ade20k_$precision.$modelFormat';

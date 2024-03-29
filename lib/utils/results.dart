@@ -9,28 +9,67 @@ import 'dart:io' show Platform;
 import 'package:http/http.dart' as http;
 
 class SendResultsOptions<T> {
+  SendResultsOptions(
+      {required this.resultsId,
+      required this.inputIndex,
+      required this.precision,
+      required this.library,
+      required this.output,
+      required this.inferenceTimeMs,
+      required this.model,
+      required this.delegate});
+
   String resultsId = '';
   int inputIndex = 0;
-  String inputPrecision = '';
+  InputPrecision precision = InputPrecision.uint8;
   String library = '';
   late T output;
   double inferenceTimeMs = 0.0;
-  String model = '';
-  String delegate = '';
+  Model model = Model.mobilenet_edgetpu;
+  DelegateOption delegate = DelegateOption.cpu;
 }
 
 class SendResultsApiOptions<T> extends SendResultsOptions<T> {
+  SendResultsApiOptions({
+    required SendResultsOptions<T> options,
+  }) : super(
+            resultsId: options.resultsId,
+            inputIndex: options.inputIndex,
+            precision: options.precision,
+            library: options.library,
+            output: options.output,
+            inferenceTimeMs: options.inferenceTimeMs,
+            model: options.model,
+            delegate: options.delegate);
+
   String platform = Platform.isAndroid ? 'android' : 'ios';
   String deviceModelName = '';
   String frameWork = 'flutter';
+
+  Map<String, dynamic> toJson() {
+    return {
+      'resultsId': resultsId,
+      'inputIndex': inputIndex,
+      'precision': precision.name,
+      'library': library,
+      'output': output,
+      'inferenceTimeMs': inferenceTimeMs,
+      'model': model.name,
+      'delegate': delegate.name,
+      'platform': platform,
+      'deviceModelName': deviceModelName,
+      'frameWork': frameWork,
+    };
+  }
 }
 
 class ResultSender {
-  final String _baseUrl = "$apiEndPoint/results";
+  final String _baseUrl = "$apiEndPoint/api/results";
 
   Future sendMobileNetResultsAsync(
-      SendResultsApiOptions<List<double>> options) async {
-    return await _sendResultsAsync("$_baseUrl/mobilenet", options);
+      SendResultsOptions<List<num>> options) async {
+    var apiOptions = SendResultsApiOptions<List<num>>(options: options);
+    return await _sendResultsAsync("$_baseUrl/mobilenet", apiOptions);
   }
 
   Future sendSSDMobileNetResultsAsync(
@@ -44,13 +83,8 @@ class ResultSender {
   }
 
   Future _sendResultsAsync(String uri, SendResultsApiOptions options) async {
-    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-    IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
-
-    options.deviceModelName =
-        Platform.isAndroid ? androidInfo.model : iosInfo.utsname.machine;
-
+    options.deviceModelName = await _getDeviceModelName();
+    print(options);
     return await http.post(
       Uri.parse(uri),
       headers: <String, String>{
@@ -58,5 +92,18 @@ class ResultSender {
       },
       body: jsonEncode(options),
     );
+  }
+
+  Future<String> _getDeviceModelName() async {
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+
+    switch (Platform.isAndroid) {
+      case true:
+        AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+        return androidInfo.device;
+      case false:
+        IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+        return iosInfo.utsname.machine;
+    }
   }
 }

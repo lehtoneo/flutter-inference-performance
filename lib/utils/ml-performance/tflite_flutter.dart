@@ -30,6 +30,7 @@ class TFLitePerformanceTester extends PerformanceTester {
 
     ResultSender resultSender = ResultSender();
 
+    var i = 0;
     for (var input in inputs) {
       var startTime = DateTime.now();
       await interpreter.runForMultipleInputs([
@@ -38,6 +39,19 @@ class TFLitePerformanceTester extends PerformanceTester {
       var endTime = DateTime.now();
 
       var timeMs = endTime.difference(startTime).inMilliseconds;
+
+      if (loadModelOptions.model == Model.mobilenet_edgetpu) {
+        await resultSender.sendMobileNetResultsAsync(
+            SendResultsOptions<List<num>>(
+                resultsId: "k",
+                inputIndex: i,
+                precision: loadModelOptions.inputPrecision,
+                library: "tflite",
+                output: output[0][0],
+                inferenceTimeMs: timeMs.toDouble(),
+                model: loadModelOptions.model,
+                delegate: loadModelOptions.delegate));
+      }
 
       if (timeMs < fastestTimeMs) {
         fastestTimeMs = timeMs.toDouble();
@@ -48,6 +62,7 @@ class TFLitePerformanceTester extends PerformanceTester {
       }
 
       sum += timeMs;
+      i++;
 
       print("Inference Time: ${timeMs}ms");
     }
@@ -65,11 +80,11 @@ class TFLitePerformanceTester extends PerformanceTester {
         return {
           0: List.filled(1 * 1001, 0).reshape([1, 1001])
         };
-      case Model.mobilenetv2:
+      case Model.mobilenet:
         return {
           0: List.filled(1 * 1000, 0).reshape([1, 1000])
         };
-      case Model.ssdMobileNet:
+      case Model.ssd_mobilenet:
         var s = inputPrecision == InputPrecision.uint8 ? 20 : 10;
         return {
           0: List.filled(1 * s * 4, 0).reshape([1, s, 4]),
@@ -128,7 +143,7 @@ class TFLitePerformanceTester extends PerformanceTester {
     var interPreterOptions = InterpreterOptions();
 
     // needed delegate, coreML, nnapi or gpu // ..addDelegate(CoreMlDelegate())
-    if (loadModelOptions.delegate == DelegateOption.coreML) {
+    if (loadModelOptions.delegate == DelegateOption.core_ml) {
       interPreterOptions.addDelegate(CoreMlDelegate());
     } else if (loadModelOptions.delegate == DelegateOption.nnapi) {
       interPreterOptions.useNnApiForAndroid = true;
