@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:inference_test/utils/ml-performance/common.dart';
+import 'package:inference_test/utils/ml-performance/tflite_flutter.dart';
 import 'package:inference_test/utils/models.dart';
-import 'package:inference_test/utils/ml-performance.dart';
 import 'package:inference_test/widgets/inference_result_display.dart';
 import 'package:inference_test/widgets/load_model_options_selector.dart';
 
@@ -15,7 +16,7 @@ class _TfTestState extends State<TfTest> {
   MLInferencePerformanceResult? _inferencePerformanceResult;
   bool _isRunning = false;
   LoadModelOptions _loadModelOptions = LoadModelOptions(
-      model: Model.mobilenet, inputPrecision: InputPrecision.float32);
+      model: Model.mobilenet_edgetpu, inputPrecision: InputPrecision.float32);
 
   void _runInference() async {
     if (_isRunning) return;

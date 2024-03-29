@@ -1,6 +1,6 @@
 import 'package:tflite_flutter/tflite_flutter.dart';
 
-enum Model { mobilenet, ssdMobileNet, deeplabv3 }
+enum Model { mobilenetv2, mobilenet_edgetpu, ssdMobileNet, deeplabv3 }
 
 enum InputPrecision { uint8, float32 }
 
@@ -41,7 +41,9 @@ class ModelsUtil {
     var precision = _getInputPrecisionString(inputPrecision);
     var modelFormat = _getModelFormatString(format);
     switch (model) {
-      case Model.mobilenet:
+      case Model.mobilenetv2:
+        return 'assets/$modelFormat/mobilenetv2_$precision.$modelFormat';
+      case Model.mobilenet_edgetpu:
         return 'assets/$modelFormat/mobilenet_edgetpu_224_1.0_$precision.$modelFormat';
       case Model.ssdMobileNet:
         return 'assets/$modelFormat/ssd_mobilenet_v2_300_$precision.$modelFormat';

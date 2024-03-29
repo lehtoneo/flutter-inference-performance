@@ -29,6 +29,7 @@ dependencies:
   tflite_flutter: 0.10.4
   onnxruntime: 1.1.0
   http: ^0.13.6
+  device_info_plus: ^9.1.2
 
 dev_dependencies:
   flutter_test:
@@ -47,12 +48,16 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
+    - assets/tflite/mobilenetv2_uint8.tflite
+    - assets/tflite/mobilenetv2_float32.tflite
     - assets/tflite/mobilenet_edgetpu_224_1.0_uint8.tflite
     - assets/tflite/mobilenet_edgetpu_224_1.0_float32.tflite
     - assets/tflite/ssd_mobilenet_v2_300_uint8.tflite
     - assets/tflite/ssd_mobilenet_v2_300_float32.tflite
     - assets/tflite/deeplabv3_mnv2_ade20k_float32.tflite
     - assets/tflite/deeplabv3_mnv2_ade20k_uint8.tflite
+    - assets/onnx/mobilenetv2_uint8.onnx
+    - assets/onnx/mobilenetv2_float32.onnx
     - assets/onnx/mobilenet_edgetpu_224_1.0_uint8.onnx
     - assets/onnx/mobilenet_edgetpu_224_1.0_float32.onnx
     - assets/onnx/ssd_mobilenet_v2_300_uint8.onnx

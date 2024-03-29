@@ -1,10 +1,6 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:onnxruntime/onnxruntime.dart';
-import 'package:inference_test/utils/data.dart';
-import 'package:inference_test/utils/ml-performance.dart';
+import 'package:inference_test/utils/ml-performance/common.dart';
+import 'package:inference_test/utils/ml-performance/onnxruntime.dart';
 import 'package:inference_test/utils/models.dart';
 import 'package:inference_test/widgets/inference_result_display.dart';
 import 'package:inference_test/widgets/load_model_options_selector.dart';
@@ -20,7 +16,7 @@ class _OnnxTestState extends State<OnnxTest> {
   bool _isRunning = false;
   MLInferencePerformanceResult? _inferencePerformanceResult;
   LoadModelOptions _loadModelOptions = LoadModelOptions(
-      model: Model.mobilenet, inputPrecision: InputPrecision.uint8);
+      model: Model.mobilenet_edgetpu, inputPrecision: InputPrecision.uint8);
 
   void _runInference() async {
     if (_isRunning) return;

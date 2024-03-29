@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:inference_test/utils/ml-performance.dart';
+import 'package:inference_test/utils/ml-performance/common.dart';
 
 class InferenceResultDisplay extends StatelessWidget {
   final MLInferencePerformanceResult? performanceResult;
