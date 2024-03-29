@@ -35,7 +35,7 @@ class FetchImagesQueryData {
 
 enum DataSet { coco, imagenet, ade20k }
 
-String getDataSetPath(DataSet dataSet) {
+String _getDataSetPath(DataSet dataSet) {
   switch (dataSet) {
     case DataSet.coco:
       return 'coco';
@@ -108,7 +108,7 @@ class DataService {
     }
 
     var skip = options.skip;
-    final String datasetValue = getDataSetPath(options.dataset);
+    final String datasetValue = _getDataSetPath(options.dataset);
 
     final url = Uri.parse(
         '$apiEndPoint/api/data/$datasetValue?amount=$amount&skip=$skip');

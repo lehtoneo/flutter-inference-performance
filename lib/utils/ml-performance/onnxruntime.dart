@@ -11,6 +11,9 @@ import 'package:inference_test/utils/models.dart';
 
 class ONNXRuntimePerformanceTester extends PerformanceTester {
   @override
+  String get libraryName => "onnxruntime";
+
+  @override
   Future<MLInferencePerformanceResult> testPerformance(
       {required LoadModelOptions loadModelOptions}) async {
     print(
@@ -53,7 +56,7 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
                 resultsId: resultsId,
                 inputIndex: i,
                 precision: loadModelOptions.inputPrecision,
-                library: "onnxruntime",
+                library: libraryName,
                 output: o[0],
                 inferenceTimeMs: timeMs.toDouble(),
                 model: loadModelOptions.model,
@@ -71,7 +74,7 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
                 resultsId: resultsId,
                 inputIndex: i,
                 precision: loadModelOptions.inputPrecision,
-                library: "tflite",
+                library: libraryName,
                 output: [o0[0][0], o1[0], o2[0], o3],
                 inferenceTimeMs: timeMs.toDouble(),
                 model: loadModelOptions.model,
@@ -86,7 +89,7 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
                 resultsId: resultsId,
                 inputIndex: i,
                 precision: loadModelOptions.inputPrecision,
-                library: "onnxruntime",
+                library: libraryName,
                 output: o[0],
                 inferenceTimeMs: timeMs.toDouble(),
                 model: loadModelOptions.model,
@@ -125,6 +128,16 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
         slowestTimeMs: slowestTimeMs);
   }
 
+  @override
+  List<DelegateOption> getLibraryDelegateOptions() {
+    return [
+      DelegateOption.core_ml,
+      DelegateOption.nnapi,
+      DelegateOption.xxnpack,
+      DelegateOption.cpu
+    ];
+  }
+
   Future<OrtSession> _getOrtSessionAsync(
       LoadModelOptions loadModelOptions) async {
     var assetFileName = ModelsUtil().getModelPath(loadModelOptions.model,
@@ -161,9 +174,16 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
     return sessionOptions;
   }
 
+  List<Map<String, OrtValue>>? _prevInputs;
+  LoadModelOptions? _prevLoadModelOptions;
+
   Future<List<Map<String, OrtValue>>> _getInputs(
       {required LoadModelOptions loadModelOptions,
       required List<String> inputNames}) async {
+    // use cached inputs if the same model is used
+    if (_prevLoadModelOptions == loadModelOptions && _prevInputs != null) {
+      return _prevInputs!;
+    }
     var tensors = await _getTensors(loadModelOptions: loadModelOptions);
 
     var inputName = inputNames[0];
@@ -171,6 +191,9 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
       var input = e;
       return {inputName: input};
     }).toList();
+
+    _prevInputs = result;
+    _prevLoadModelOptions = loadModelOptions;
     return result;
   }
 

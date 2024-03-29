@@ -4,10 +4,12 @@ import 'package:inference_test/utils/models.dart';
 class LoadModelOptionsSelector extends StatefulWidget {
   final LoadModelOptions initialOptions;
   final Function(LoadModelOptions) onOptionsChanged;
-  final List<DelegateOption> delegates = DelegateOption.values;
-
+  final List<DelegateOption> delegates;
   const LoadModelOptionsSelector(
-      {Key? key, required this.initialOptions, required this.onOptionsChanged})
+      {Key? key,
+      required this.initialOptions,
+      required this.onOptionsChanged,
+      required this.delegates})
       : super(key: key);
 
   @override

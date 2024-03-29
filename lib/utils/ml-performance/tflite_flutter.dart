@@ -11,8 +11,16 @@ import 'package:tflite_flutter/tflite_flutter.dart';
 enum TFLiteDelegate { coreML, nnapi, gpu, cpu }
 
 class TFLitePerformanceTester extends PerformanceTester {
+  @override
+  String get libraryName => "tflite_flutter";
+
   dynamic _inputs;
   LoadModelOptions? _prevLoadModelOptions;
+
+  @override
+  List<DelegateOption> getLibraryDelegateOptions() {
+    return DelegateOption.values;
+  }
 
   @override
   Future<MLInferencePerformanceResult> testPerformance({
@@ -57,7 +65,7 @@ class TFLitePerformanceTester extends PerformanceTester {
                 resultsId: resultsId,
                 inputIndex: i,
                 precision: loadModelOptions.inputPrecision,
-                library: "tflite",
+                library: libraryName,
                 output: output[0][0],
                 inferenceTimeMs: timeMs.toDouble(),
                 model: loadModelOptions.model,
@@ -70,7 +78,7 @@ class TFLitePerformanceTester extends PerformanceTester {
                 resultsId: resultsId,
                 inputIndex: i,
                 precision: loadModelOptions.inputPrecision,
-                library: "tflite",
+                library: libraryName,
                 output: [
                   output[0][0][0],
                   output[1][0],
@@ -88,7 +96,7 @@ class TFLitePerformanceTester extends PerformanceTester {
                 resultsId: resultsId,
                 inputIndex: i,
                 precision: loadModelOptions.inputPrecision,
-                library: "tflite",
+                library: libraryName,
                 output: output[0][0],
                 inferenceTimeMs: timeMs.toDouble(),
                 model: loadModelOptions.model,

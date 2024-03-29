@@ -1,5 +1,3 @@
-import 'package:tflite_flutter/tflite_flutter.dart';
-
 enum Model { mobilenet, mobilenet_edgetpu, ssd_mobilenet, deeplabv3 }
 
 enum InputPrecision {

@@ -35,6 +35,8 @@ class _PerformanceTesterWidgetState extends State<PerformanceTesterWidget> {
       _error = null;
     });
 
+    print(performanceTester.getDelegateOptions());
+
     try {
       var result = await performanceTester.testPerformance(
           loadModelOptions: _loadModelOptions);
@@ -54,6 +56,8 @@ class _PerformanceTesterWidgetState extends State<PerformanceTesterWidget> {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        Text(performanceTester.libraryName, style: TextStyle(fontSize: 24)),
+        Text("Select options:"),
         LoadModelOptionsSelector(
           initialOptions: _loadModelOptions,
           onOptionsChanged: (newOptions) {
@@ -61,6 +65,7 @@ class _PerformanceTesterWidgetState extends State<PerformanceTesterWidget> {
               _loadModelOptions = newOptions;
             });
           },
+          delegates: performanceTester.getDelegateOptions(),
         ),
         ElevatedButton(
           onPressed: _runInference,
