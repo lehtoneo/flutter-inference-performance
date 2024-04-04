@@ -164,7 +164,7 @@ class TFLitePerformanceTester extends PerformanceTester {
 
     var inputShape = getInputShape(model);
 
-    var precisionData = formatImageDataToPrecision(data, inputPrecision);
+    var precisionData = formatImageDataToPrecision(data, inputPrecision, model);
     var reshaped = precisionData.map((e) => e.reshape(inputShape)).toList();
 
     print("Data formatted");

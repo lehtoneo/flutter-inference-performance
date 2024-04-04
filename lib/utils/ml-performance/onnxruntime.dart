@@ -207,8 +207,8 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
 
     var inputShape = getInputShape(loadModelOptions.model);
 
-    var precisionData =
-        formatImageDataToPrecision(data, loadModelOptions.inputPrecision);
+    var precisionData = formatImageDataToPrecision(
+        data, loadModelOptions.inputPrecision, loadModelOptions.model);
 
     var tensors = precisionData.map((e) {
       if (loadModelOptions.inputPrecision == InputPrecision.uint8) {

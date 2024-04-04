@@ -63,17 +63,38 @@ class PerformanceTesterCommon {
     }
   }
 
-  List<List<num>> formatImageDataToPrecision(
-      List<FetchImagesQueryData> data, InputPrecision inputPrecision) {
+  List<List<num>> formatImageDataToPrecision(List<FetchImagesQueryData> data,
+      InputPrecision inputPrecision, Model model) {
+    var asUint8 = data.map((e) => e.rawImageBuffer.data).toList();
     if (inputPrecision == InputPrecision.uint8) {
-      var asUint8 = data.map((e) => e.rawImageBuffer.data).toList();
       return asUint8;
     } else {
-      var buffers = data.map((e) => e.rawImageBuffer.data).toList();
-      var asDoubles = buffers.map((e) {
-        return e.map((e) => e.toDouble() / 128 - 1).toList();
-      }).toList();
-      return asDoubles;
+      ;
+      switch (model) {
+        case Model.mobilenetv2:
+          return asUint8.map((e) {
+            return e
+                .map((e) => 0.007843137718737125 * (e.toDouble() - 127))
+                .toList();
+          }).toList();
+        case Model.mobilenet_edgetpu:
+          var asDoubles = asUint8.map((e) {
+            return e
+                .map((e) => 0.007874015718698502 * (e.toDouble() - 128))
+                .toList();
+          }).toList();
+          return asDoubles;
+        case Model.ssd_mobilenet:
+          return asUint8.map((e) {
+            return e.map((e) => 0.0078125 * (e.toDouble() - 128)).toList();
+          }).toList();
+        case Model.deeplabv3:
+          return asUint8.map((e) {
+            return e.map((e) => 0.0078125 * (e.toDouble() - 128)).toList();
+          }).toList();
+        default:
+          throw Exception("Unknown model");
+      }
     }
   }
 }
