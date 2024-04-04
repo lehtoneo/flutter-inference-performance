@@ -59,7 +59,7 @@ class TFLitePerformanceTester extends PerformanceTester {
       var timeMs = endTime.difference(startTime).inMilliseconds;
 
       if (loadModelOptions.model == Model.mobilenet_edgetpu ||
-          loadModelOptions.model == Model.mobilenet) {
+          loadModelOptions.model == Model.mobilenetv2) {
         await resultSender.sendMobileNetResultsAsync(
             SendResultsOptions<List<num>>(
                 resultsId: resultsId,
@@ -130,7 +130,7 @@ class TFLitePerformanceTester extends PerformanceTester {
         return {
           0: List.filled(1 * 1001, 0).reshape([1, 1001])
         };
-      case Model.mobilenet:
+      case Model.mobilenetv2:
         return {
           0: List.filled(1 * 1000, 0).reshape([1, 1000])
         };
@@ -205,7 +205,7 @@ class TFLitePerformanceTester extends PerformanceTester {
       interPreterOptions.useMetalDelegateForIOS = true;
     } else if (loadModelOptions.delegate == DelegateOption.gpu) {
       interPreterOptions.addDelegate(GpuDelegate());
-    } else if (loadModelOptions.delegate == DelegateOption.xxnpack) {
+    } else if (loadModelOptions.delegate == DelegateOption.xnnpack) {
       interPreterOptions.addDelegate(XNNPackDelegate());
     } else if (loadModelOptions.delegate == DelegateOption.cpu) {
     } else {

@@ -48,7 +48,7 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
       var timeMs = end.difference(start).inMilliseconds;
 
       if (loadModelOptions.model == Model.mobilenet_edgetpu ||
-          loadModelOptions.model == Model.mobilenet) {
+          loadModelOptions.model == Model.mobilenetv2) {
         print(outputs?[0]?.value);
         dynamic o = outputs?[0]?.value;
         await resultSender.sendMobileNetResultsAsync(
@@ -133,7 +133,7 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
     return [
       DelegateOption.core_ml,
       DelegateOption.nnapi,
-      DelegateOption.xxnpack,
+      DelegateOption.xnnpack,
       DelegateOption.cpu
     ];
   }
@@ -162,7 +162,7 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
       case DelegateOption.nnapi:
         sessionOptions.appendNnapiProvider(NnapiFlags.useNone);
         break;
-      case DelegateOption.xxnpack:
+      case DelegateOption.xnnpack:
         sessionOptions.appendXnnpackProvider();
         break;
       case DelegateOption.cpu:

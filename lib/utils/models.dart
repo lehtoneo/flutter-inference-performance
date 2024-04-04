@@ -1,4 +1,4 @@
-enum Model { mobilenet, mobilenet_edgetpu, ssd_mobilenet, deeplabv3 }
+enum Model { mobilenetv2, mobilenet_edgetpu, ssd_mobilenet, deeplabv3 }
 
 enum InputPrecision {
   uint8,
@@ -7,7 +7,7 @@ enum InputPrecision {
 
 enum ModelFormat { tflite, onnx }
 
-enum DelegateOption { core_ml, nnapi, gpu, metal, cpu, xxnpack }
+enum DelegateOption { core_ml, nnapi, gpu, metal, cpu, xnnpack }
 
 class LoadModelOptions {
   final Model model;
@@ -48,7 +48,7 @@ class ModelsUtil {
     var precision = _getInputPrecisionString(inputPrecision);
     var modelFormat = _getModelFormatString(format);
     switch (model) {
-      case Model.mobilenet:
+      case Model.mobilenetv2:
         return 'assets/$modelFormat/mobilenetv2_$precision.$modelFormat';
       case Model.mobilenet_edgetpu:
         return 'assets/$modelFormat/mobilenet_edgetpu_224_1.0_$precision.$modelFormat';

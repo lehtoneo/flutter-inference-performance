@@ -22,7 +22,7 @@ class PerformanceTesterCommon {
         DelegateOption.nnapi,
         DelegateOption.gpu,
         DelegateOption.cpu,
-        DelegateOption.xxnpack
+        DelegateOption.xnnpack
       ];
     } else if (Platform.isIOS) {
       // ios
@@ -39,7 +39,7 @@ class PerformanceTesterCommon {
 
   DataSet getModelDataSet(Model model) {
     switch (model) {
-      case Model.mobilenet_edgetpu || Model.mobilenet:
+      case Model.mobilenet_edgetpu || Model.mobilenetv2:
         return DataSet.imagenet;
       case Model.ssd_mobilenet:
         return DataSet.coco;
@@ -52,7 +52,7 @@ class PerformanceTesterCommon {
 
   List<int> getInputShape(Model model) {
     switch (model) {
-      case Model.mobilenet_edgetpu || Model.mobilenet:
+      case Model.mobilenet_edgetpu || Model.mobilenetv2:
         return [224, 224, 3];
       case Model.ssd_mobilenet:
         return [300, 300, 3];
@@ -71,7 +71,7 @@ class PerformanceTesterCommon {
     } else {
       var buffers = data.map((e) => e.rawImageBuffer.data).toList();
       var asDoubles = buffers.map((e) {
-        return e.map((e) => e.toDouble() / 127 - 1).toList();
+        return e.map((e) => e.toDouble() / 128 - 1).toList();
       }).toList();
       return asDoubles;
     }
