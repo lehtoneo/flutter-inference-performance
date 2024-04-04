@@ -73,24 +73,20 @@ class PerformanceTesterCommon {
       switch (model) {
         case Model.mobilenetv2:
           return asUint8.map((e) {
-            return e
-                .map((e) => 0.007843137718737125 * (e.toDouble() - 127))
-                .toList();
+            return e.map((e) => e.toDouble() / 127.5 - 1).toList();
           }).toList();
         case Model.mobilenet_edgetpu:
           var asDoubles = asUint8.map((e) {
-            return e
-                .map((e) => 0.007874015718698502 * (e.toDouble() - 128))
-                .toList();
+            return e.map((e) => e.toDouble() / 127.5 - 1).toList();
           }).toList();
           return asDoubles;
         case Model.ssd_mobilenet:
           return asUint8.map((e) {
-            return e.map((e) => 0.0078125 * (e.toDouble() - 128)).toList();
+            return e.map((e) => e.toDouble() / 127.5 - 1).toList();
           }).toList();
         case Model.deeplabv3:
           return asUint8.map((e) {
-            return e.map((e) => 0.0078125 * (e.toDouble() - 128)).toList();
+            return e.map((e) => e.toDouble() / 255).toList();
           }).toList();
         default:
           throw Exception("Unknown model");
