@@ -37,6 +37,9 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
     var resultSender = ResultSender();
     var i = 0;
     var resultsId = DateTime.now().millisecondsSinceEpoch.toString();
+
+    List<SendResultsOptions<dynamic>> results = [];
+
     for (var data in ttt) {
       var inputOrt = data;
       print("run");
@@ -51,16 +54,16 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
           loadModelOptions.model == Model.mobilenetv2) {
         print(outputs?[0]?.value);
         dynamic o = outputs?[0]?.value;
-        await resultSender.sendMobileNetResultsAsync(
-            SendResultsOptions<List<num>>(
-                resultsId: resultsId,
-                inputIndex: i,
-                precision: loadModelOptions.inputPrecision,
-                library: libraryName,
-                output: o[0],
-                inferenceTimeMs: timeMs.toDouble(),
-                model: loadModelOptions.model,
-                delegate: loadModelOptions.delegate));
+        var t = o[0];
+        results.add(SendResultsOptions<List<num>>(
+            resultsId: resultsId,
+            inputIndex: i,
+            precision: loadModelOptions.inputPrecision,
+            library: libraryName,
+            output: t,
+            inferenceTimeMs: timeMs.toDouble(),
+            model: loadModelOptions.model,
+            delegate: loadModelOptions.delegate));
       }
 
       if (loadModelOptions.model == Model.ssd_mobilenet) {
@@ -69,31 +72,29 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
         dynamic o2 = outputs?[2]?.value;
         dynamic o3 = outputs?[3]?.value;
 
-        await resultSender.sendSSDMobileNetResultsAsync(
-            SendResultsOptions<dynamic>(
-                resultsId: resultsId,
-                inputIndex: i,
-                precision: loadModelOptions.inputPrecision,
-                library: libraryName,
-                output: [o0[0][0], o1[0], o2[0], o3],
-                inferenceTimeMs: timeMs.toDouble(),
-                model: loadModelOptions.model,
-                delegate: loadModelOptions.delegate));
+        results.add(SendResultsOptions<dynamic>(
+            resultsId: resultsId,
+            inputIndex: i,
+            precision: loadModelOptions.inputPrecision,
+            library: libraryName,
+            output: [o0[0][0], o1[0], o2[0], o3],
+            inferenceTimeMs: timeMs.toDouble(),
+            model: loadModelOptions.model,
+            delegate: loadModelOptions.delegate));
       }
 
       if (loadModelOptions.model == Model.deeplabv3) {
         print(outputs?[0]?.value);
         dynamic o = outputs?[0]?.value;
-        await resultSender.sendDeepLabV3ResultsAsync(
-            SendResultsOptions<List<List<num>>>(
-                resultsId: resultsId,
-                inputIndex: i,
-                precision: loadModelOptions.inputPrecision,
-                library: libraryName,
-                output: o[0],
-                inferenceTimeMs: timeMs.toDouble(),
-                model: loadModelOptions.model,
-                delegate: loadModelOptions.delegate));
+        results.add(SendResultsOptions<List<num>>(
+            resultsId: resultsId,
+            inputIndex: i,
+            precision: loadModelOptions.inputPrecision,
+            library: libraryName,
+            output: o[0],
+            inferenceTimeMs: timeMs.toDouble(),
+            model: loadModelOptions.model,
+            delegate: loadModelOptions.delegate));
       }
 
       print(timeMs);
@@ -116,11 +117,15 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
     }
 
     print("Inference ready");
-
     session.release();
     runOptions.release();
 
     OrtEnv.instance.release();
+
+    print("Sending results");
+    await resultSender.sendMultipleResultsAsync(
+        loadModelOptions.model, results);
+    print("Results sent");
 
     return MLInferencePerformanceResult(
         avgPerformanceTimeMs: sum / ttt.length,

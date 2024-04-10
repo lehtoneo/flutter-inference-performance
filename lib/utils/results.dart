@@ -66,22 +66,16 @@ class SendResultsApiOptions<T> extends SendResultsOptions<T> {
 class ResultSender {
   final String _baseUrl = "$apiEndPoint/api/results";
 
-  Future sendMobileNetResultsAsync(
-      SendResultsOptions<List<num>> options) async {
-    var apiOptions = SendResultsApiOptions<List<num>>(options: options);
-    return await _sendResultsAsync("$_baseUrl/mobilenet", apiOptions);
-  }
-
-  Future sendSSDMobileNetResultsAsync(
-      SendResultsOptions<dynamic> options) async {
-    var apiOptions = SendResultsApiOptions<dynamic>(options: options);
-    return await _sendResultsAsync("$_baseUrl/ssd-mobilenet", apiOptions);
-  }
-
-  Future sendDeepLabV3ResultsAsync(
-      SendResultsOptions<List<List<num>>> options) async {
-    var apiOptions = SendResultsApiOptions<List<List<num>>>(options: options);
-    return await _sendResultsAsync("$_baseUrl/deeplabv3", apiOptions);
+  Future sendMultipleResultsAsync(
+      Model model, List<SendResultsOptions<dynamic>> options) async {
+    var i = 0;
+    var pathName = getModelApiPathName(model);
+    while (i < options.length) {
+      var s = options[i];
+      var apiOptions = SendResultsApiOptions(options: s);
+      await _sendResultsAsync("$_baseUrl/$pathName", apiOptions);
+      i++;
+    }
   }
 
   Future _sendResultsAsync(String uri, SendResultsApiOptions options) async {
@@ -94,6 +88,21 @@ class ResultSender {
       },
       body: jsonEncode(options),
     );
+  }
+
+  String getModelApiPathName(Model model) {
+    switch (model) {
+      case Model.mobilenet_edgetpu:
+        return 'mobilenet_edgetpu';
+      case Model.mobilenetv2:
+        return 'mobilenetv2';
+      case Model.ssd_mobilenet:
+        return 'ssd_mobilenet';
+      case Model.deeplabv3:
+        return 'deeplabv3';
+      default:
+        throw Exception("Unknown model");
+    }
   }
 
   Future<String> _getDeviceModelName() async {

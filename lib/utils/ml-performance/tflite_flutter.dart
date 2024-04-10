@@ -49,6 +49,7 @@ class TFLitePerformanceTester extends PerformanceTester {
 
     var i = 0;
     var resultsId = DateTime.now().millisecondsSinceEpoch.toString();
+    List<SendResultsOptions<dynamic>> results = [];
     for (var input in inputs) {
       var startTime = DateTime.now();
       await interpreter.runForMultipleInputs([
@@ -60,47 +61,39 @@ class TFLitePerformanceTester extends PerformanceTester {
 
       if (loadModelOptions.model == Model.mobilenet_edgetpu ||
           loadModelOptions.model == Model.mobilenetv2) {
-        await resultSender.sendMobileNetResultsAsync(
-            SendResultsOptions<List<num>>(
-                resultsId: resultsId,
-                inputIndex: i,
-                precision: loadModelOptions.inputPrecision,
-                library: libraryName,
-                output: output[0][0],
-                inferenceTimeMs: timeMs.toDouble(),
-                model: loadModelOptions.model,
-                delegate: loadModelOptions.delegate));
+        results.add(SendResultsOptions<List<num>>(
+            resultsId: resultsId,
+            inputIndex: i,
+            precision: loadModelOptions.inputPrecision,
+            library: libraryName,
+            output: output[0][0],
+            inferenceTimeMs: timeMs.toDouble(),
+            model: loadModelOptions.model,
+            delegate: loadModelOptions.delegate));
       }
 
       if (loadModelOptions.model == Model.ssd_mobilenet) {
-        await resultSender.sendSSDMobileNetResultsAsync(
-            SendResultsOptions<dynamic>(
-                resultsId: resultsId,
-                inputIndex: i,
-                precision: loadModelOptions.inputPrecision,
-                library: libraryName,
-                output: [
-                  output[0][0][0],
-                  output[1][0],
-                  output[2][0],
-                  output[3]
-                ],
-                inferenceTimeMs: timeMs.toDouble(),
-                model: loadModelOptions.model,
-                delegate: loadModelOptions.delegate));
+        results.add(SendResultsOptions<List<dynamic>>(
+            resultsId: resultsId,
+            inputIndex: i,
+            precision: loadModelOptions.inputPrecision,
+            library: libraryName,
+            output: [output[0][0][0], output[1][0], output[2][0], output[3]],
+            inferenceTimeMs: timeMs.toDouble(),
+            model: loadModelOptions.model,
+            delegate: loadModelOptions.delegate));
       }
 
       if (loadModelOptions.model == Model.deeplabv3) {
-        await resultSender.sendDeepLabV3ResultsAsync(
-            SendResultsOptions<List<List<num>>>(
-                resultsId: resultsId,
-                inputIndex: i,
-                precision: loadModelOptions.inputPrecision,
-                library: libraryName,
-                output: output[0][0],
-                inferenceTimeMs: timeMs.toDouble(),
-                model: loadModelOptions.model,
-                delegate: loadModelOptions.delegate));
+        results.add(SendResultsOptions<List<num>>(
+            resultsId: resultsId,
+            inputIndex: i,
+            precision: loadModelOptions.inputPrecision,
+            library: libraryName,
+            output: output[0][0],
+            inferenceTimeMs: timeMs.toDouble(),
+            model: loadModelOptions.model,
+            delegate: loadModelOptions.delegate));
       }
 
       if (timeMs < fastestTimeMs) {
@@ -117,6 +110,9 @@ class TFLitePerformanceTester extends PerformanceTester {
       print("Inference Time: ${timeMs}ms");
     }
     interpreter.close();
+
+    await resultSender.sendMultipleResultsAsync(
+        loadModelOptions.model, results);
 
     return MLInferencePerformanceResult(
         avgPerformanceTimeMs: sum / inputs.length,
