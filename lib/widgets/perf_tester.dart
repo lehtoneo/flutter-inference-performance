@@ -19,6 +19,7 @@ class _PerformanceTesterWidgetState extends State<PerformanceTesterWidget> {
   final PerformanceTester performanceTester;
   _PerformanceTesterWidgetState({required this.performanceTester});
 
+  int runTimes = 5;
   bool _isRunning = false;
   String? _error;
   MLInferencePerformanceResult? _inferencePerformanceResult;
@@ -37,19 +38,29 @@ class _PerformanceTesterWidgetState extends State<PerformanceTesterWidget> {
 
     print(performanceTester.getDelegateOptions());
 
-    try {
-      var result = await performanceTester.testPerformance(
-          loadModelOptions: _loadModelOptions);
-      setState(() {
-        _inferencePerformanceResult = result;
-        _isRunning = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isRunning = false;
-      });
+    int run = 0;
+
+    while (run < runTimes) {
+      print("Running for the $run time");
+      try {
+        var result = await performanceTester.testPerformance(
+            loadModelOptions: _loadModelOptions);
+
+        setState(() {
+          _inferencePerformanceResult = result;
+        });
+      } catch (e) {
+        setState(() {
+          _error = e.toString();
+          _isRunning = false;
+        });
+        break;
+      }
     }
+    run++;
+    setState(() {
+      _isRunning = false;
+    });
   }
 
   @override
