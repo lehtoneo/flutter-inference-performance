@@ -152,8 +152,9 @@ class TFLitePerformanceTester extends PerformanceTester {
     required InputPrecision inputPrecision,
   }) async {
     print("Fetching data for model: ${model.name}");
+    var amount = model == Model.deeplabv3 ? 100 : 300;
     var options =
-        FetchImageDataOptions(amount: 20, dataset: getModelDataSet(model));
+        FetchImageDataOptions(amount: amount, dataset: getModelDataSet(model));
 
     var data = await DataService().fetchImageData(options: options);
     print("Data fetched");

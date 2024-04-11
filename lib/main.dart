@@ -24,9 +24,6 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _checkCondition();
-    // Start the timer
-    _timer =
-        Timer.periodic(Duration(seconds: 30), (Timer t) => _checkCondition());
   }
 
   Future _checkCondition() async {

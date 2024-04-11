@@ -205,9 +205,9 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
   Future<List<OrtValueTensor>> _getTensors({
     required LoadModelOptions loadModelOptions,
   }) async {
-    print("Getting data");
+    var amount = loadModelOptions.model == Model.deeplabv3 ? 100 : 300;
     var options = FetchImageDataOptions(
-        amount: 20, dataset: getModelDataSet(loadModelOptions.model));
+        amount: amount, dataset: getModelDataSet(loadModelOptions.model));
     var data = await DataService().fetchImageData(options: options);
 
     var inputShape = getInputShape(loadModelOptions.model);

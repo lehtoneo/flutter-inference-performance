@@ -68,7 +68,7 @@ class DataService {
     required FetchImageDataOptions options,
   }) async {
     // need to fetch in batches as the request response payload is too large in some cases
-    var batchSize = 5;
+    var batchSize = 50;
 
     if (options.amount <= batchSize) {
       return await _fetchImageDataFromApi(
