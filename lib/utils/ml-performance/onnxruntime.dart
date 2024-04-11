@@ -86,7 +86,7 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
       if (loadModelOptions.model == Model.deeplabv3) {
         print(outputs?[0]?.value);
         dynamic o = outputs?[0]?.value;
-        results.add(SendResultsOptions<List<num>>(
+        results.add(SendResultsOptions<dynamic>(
             resultsId: resultsId,
             inputIndex: i,
             precision: loadModelOptions.inputPrecision,

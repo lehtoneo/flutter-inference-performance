@@ -81,23 +81,27 @@ class ResultSender {
   Future _sendResultsAsync(String uri, SendResultsApiOptions options) async {
     options.deviceModelName = await _getDeviceModelName();
     print(options);
-    return await http.post(
+    var result = await http.post(
       Uri.parse(uri),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
       body: jsonEncode(options),
     );
+    if (result.statusCode != 200) {
+      print("Failed to send results");
+    }
+    return result;
   }
 
   String getModelApiPathName(Model model) {
     switch (model) {
       case Model.mobilenet_edgetpu:
-        return 'mobilenet_edgetpu';
+        return 'mobilenet';
       case Model.mobilenetv2:
-        return 'mobilenetv2';
+        return 'mobilenet';
       case Model.ssd_mobilenet:
-        return 'ssd_mobilenet';
+        return 'ssd-mobilenet';
       case Model.deeplabv3:
         return 'deeplabv3';
       default:

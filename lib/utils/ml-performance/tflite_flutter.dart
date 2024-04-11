@@ -61,7 +61,7 @@ class TFLitePerformanceTester extends PerformanceTester {
 
       if (loadModelOptions.model == Model.mobilenet_edgetpu ||
           loadModelOptions.model == Model.mobilenetv2) {
-        results.add(SendResultsOptions<List<num>>(
+        results.add(SendResultsOptions<dynamic>(
             resultsId: resultsId,
             inputIndex: i,
             precision: loadModelOptions.inputPrecision,
@@ -85,7 +85,7 @@ class TFLitePerformanceTester extends PerformanceTester {
       }
 
       if (loadModelOptions.model == Model.deeplabv3) {
-        results.add(SendResultsOptions<List<num>>(
+        results.add(SendResultsOptions<dynamic>(
             resultsId: resultsId,
             inputIndex: i,
             precision: loadModelOptions.inputPrecision,

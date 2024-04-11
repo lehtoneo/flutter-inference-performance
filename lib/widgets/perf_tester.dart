@@ -19,7 +19,7 @@ class _PerformanceTesterWidgetState extends State<PerformanceTesterWidget> {
   final PerformanceTester performanceTester;
   _PerformanceTesterWidgetState({required this.performanceTester});
 
-  int runTimes = 5;
+  int runTimes = 1;
   bool _isRunning = false;
   String? _error;
   MLInferencePerformanceResult? _inferencePerformanceResult;
@@ -56,8 +56,8 @@ class _PerformanceTesterWidgetState extends State<PerformanceTesterWidget> {
         });
         break;
       }
+      run++;
     }
-    run++;
     setState(() {
       _isRunning = false;
     });
