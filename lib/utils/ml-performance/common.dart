@@ -30,7 +30,8 @@ class PerformanceTesterCommon {
         DelegateOption.core_ml,
         DelegateOption.gpu,
         DelegateOption.metal,
-        DelegateOption.cpu
+        DelegateOption.cpu,
+        DelegateOption.xnnpack
       ];
     } else {
       throw Exception("Unknown platform");

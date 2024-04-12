@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:inference_test/utils/env.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class Buffer {
   final String type;
@@ -51,8 +52,10 @@ String _getDataSetPath(DataSet dataSet) {
 class FetchImageDataOptions {
   final int amount;
   final DataSet dataset;
+  int skip;
 
-  FetchImageDataOptions({required this.amount, required this.dataset});
+  FetchImageDataOptions(
+      {required this.amount, required this.dataset, this.skip = 0});
 }
 
 class _FetchImageDataApiOptions extends FetchImageDataOptions {
@@ -74,7 +77,7 @@ class DataService {
       return await _fetchImageDataFromApi(
         options: _FetchImageDataApiOptions(
           amount: options.amount,
-          skip: 0,
+          skip: options.skip,
           dataset: options.dataset,
         ),
       );
@@ -86,7 +89,7 @@ class DataService {
       var result = await _fetchImageDataFromApi(
         options: _FetchImageDataApiOptions(
           amount: batchSize,
-          skip: i,
+          skip: options.skip,
           dataset: options.dataset,
         ),
       );
@@ -126,12 +129,16 @@ class DataService {
   }
 
   static Future<bool> isReachable() async {
+    var t = await Permission.nearbyWifiDevices.request();
+
     var url = Uri.parse("$apiEndPoint/health");
 
-    final response = await http.get(url);
-
-    print(response.statusCode);
-
-    return response.statusCode == 200 ? true : false;
+    try {
+      var response = await http.get(url);
+      return response.statusCode == 200;
+    } catch (e) {
+      print(e.toString());
+      return false;
+    }
   }
 }

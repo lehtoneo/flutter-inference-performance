@@ -14,9 +14,6 @@ class TFLitePerformanceTester extends PerformanceTester {
   @override
   String get libraryName => "tflite_flutter";
 
-  dynamic _inputs;
-  LoadModelOptions? _prevLoadModelOptions;
-
   @override
   List<DelegateOption> getLibraryDelegateOptions() {
     return DelegateOption.values;
@@ -29,17 +26,6 @@ class TFLitePerformanceTester extends PerformanceTester {
     var interpreter = await _loadTFLiteModel(loadModelOptions);
 
     // cache inputs if the same model is used
-    final inputs = _prevLoadModelOptions == loadModelOptions
-        ? _inputs
-        : await _getFormattedImageData(
-            model: loadModelOptions.model,
-            inputPrecision: loadModelOptions.inputPrecision);
-
-    _prevLoadModelOptions = loadModelOptions;
-    _inputs = inputs;
-
-    var output = _getOutPutTensor(
-        loadModelOptions.model, loadModelOptions.inputPrecision);
 
     var fastestTimeMs = double.infinity;
     var slowestTimeMs = 0.0;
@@ -47,75 +33,89 @@ class TFLitePerformanceTester extends PerformanceTester {
 
     ResultSender resultSender = ResultSender();
 
-    var i = 0;
     var resultsId = DateTime.now().millisecondsSinceEpoch.toString();
-    List<SendResultsOptions<dynamic>> results = [];
-    for (var input in inputs) {
-      var startTime = DateTime.now();
-      await interpreter.runForMultipleInputs([
-        [input]
-      ], output);
-      var endTime = DateTime.now();
 
-      var timeMs = endTime.difference(startTime).inMilliseconds;
+    var batchSize = 25;
+    var maxAmount = loadModelOptions.model == Model.deeplabv3 ? 100 : 300;
 
-      if (loadModelOptions.model == Model.mobilenet_edgetpu ||
-          loadModelOptions.model == Model.mobilenetv2) {
-        results.add(SendResultsOptions<dynamic>(
-            resultsId: resultsId,
-            inputIndex: i,
-            precision: loadModelOptions.inputPrecision,
-            library: libraryName,
-            output: output[0][0],
-            inferenceTimeMs: timeMs.toDouble(),
-            model: loadModelOptions.model,
-            delegate: loadModelOptions.delegate));
+    for (var i = 0; i < maxAmount;) {
+      List<SendResultsOptions<dynamic>> results = [];
+      final inputs = await _getFormattedImageData(
+          model: loadModelOptions.model,
+          inputPrecision: loadModelOptions.inputPrecision,
+          skip: i,
+          batchSize: batchSize);
+      for (var input in inputs) {
+        var output = _getOutPutTensor(
+            loadModelOptions.model, loadModelOptions.inputPrecision);
+        var startTime = DateTime.now();
+        await interpreter.runForMultipleInputs([
+          [input]
+        ], output);
+        var endTime = DateTime.now();
+
+        var timeMs = endTime.difference(startTime).inMilliseconds;
+
+        if (loadModelOptions.model == Model.mobilenet_edgetpu ||
+            loadModelOptions.model == Model.mobilenetv2) {
+          results.add(SendResultsOptions<dynamic>(
+              resultsId: resultsId,
+              inputIndex: i,
+              precision: loadModelOptions.inputPrecision,
+              library: libraryName,
+              output: output[0][0],
+              inferenceTimeMs: timeMs.toDouble(),
+              model: loadModelOptions.model,
+              delegate: loadModelOptions.delegate));
+        }
+
+        if (loadModelOptions.model == Model.ssd_mobilenet) {
+          results.add(SendResultsOptions<List<dynamic>>(
+              resultsId: resultsId,
+              inputIndex: i,
+              precision: loadModelOptions.inputPrecision,
+              library: libraryName,
+              output: [output[0][0][0], output[1][0], output[2][0], output[3]],
+              inferenceTimeMs: timeMs.toDouble(),
+              model: loadModelOptions.model,
+              delegate: loadModelOptions.delegate));
+        }
+
+        if (loadModelOptions.model == Model.deeplabv3) {
+          results.add(SendResultsOptions<dynamic>(
+              resultsId: resultsId,
+              inputIndex: i,
+              precision: loadModelOptions.inputPrecision,
+              library: libraryName,
+              output: output[0][0],
+              inferenceTimeMs: timeMs.toDouble(),
+              model: loadModelOptions.model,
+              delegate: loadModelOptions.delegate));
+        }
+
+        if (timeMs < fastestTimeMs) {
+          fastestTimeMs = timeMs.toDouble();
+        }
+
+        if (timeMs > slowestTimeMs) {
+          slowestTimeMs = timeMs.toDouble();
+        }
+
+        sum += timeMs;
+        i++;
+
+        print("Inference Time: ${timeMs}ms");
       }
 
-      if (loadModelOptions.model == Model.ssd_mobilenet) {
-        results.add(SendResultsOptions<List<dynamic>>(
-            resultsId: resultsId,
-            inputIndex: i,
-            precision: loadModelOptions.inputPrecision,
-            library: libraryName,
-            output: [output[0][0][0], output[1][0], output[2][0], output[3]],
-            inferenceTimeMs: timeMs.toDouble(),
-            model: loadModelOptions.model,
-            delegate: loadModelOptions.delegate));
-      }
-
-      if (loadModelOptions.model == Model.deeplabv3) {
-        results.add(SendResultsOptions<dynamic>(
-            resultsId: resultsId,
-            inputIndex: i,
-            precision: loadModelOptions.inputPrecision,
-            library: libraryName,
-            output: output[0][0],
-            inferenceTimeMs: timeMs.toDouble(),
-            model: loadModelOptions.model,
-            delegate: loadModelOptions.delegate));
-      }
-
-      if (timeMs < fastestTimeMs) {
-        fastestTimeMs = timeMs.toDouble();
-      }
-
-      if (timeMs > slowestTimeMs) {
-        slowestTimeMs = timeMs.toDouble();
-      }
-
-      sum += timeMs;
-      i++;
-
-      print("Inference Time: ${timeMs}ms");
+      await resultSender.sendMultipleResultsAsync(
+          loadModelOptions.model, results);
+      results = [];
     }
+
     interpreter.close();
 
-    await resultSender.sendMultipleResultsAsync(
-        loadModelOptions.model, results);
-
     return MLInferencePerformanceResult(
-        avgPerformanceTimeMs: sum / inputs.length,
+        avgPerformanceTimeMs: sum / maxAmount,
         fastestTimeMs: fastestTimeMs,
         slowestTimeMs: slowestTimeMs);
   }
@@ -147,18 +147,24 @@ class TFLitePerformanceTester extends PerformanceTester {
     }
   }
 
-  Future<List<dynamic>> _getFormattedImageData({
-    required Model model,
-    required InputPrecision inputPrecision,
-  }) async {
+  Future<List<dynamic>> _getFormattedImageData(
+      {required Model model,
+      required InputPrecision inputPrecision,
+      required int skip,
+      required int batchSize}) async {
     print("Fetching data for model: ${model.name}");
-    var amount = model == Model.deeplabv3 ? 100 : 300;
-    var options =
-        FetchImageDataOptions(amount: amount, dataset: getModelDataSet(model));
+
+    var options = FetchImageDataOptions(
+        amount: batchSize, dataset: getModelDataSet(model), skip: skip);
 
     var data = await DataService().fetchImageData(options: options);
     print("Data fetched");
 
+    return _formatImageData(data, inputPrecision, model);
+  }
+
+  List<dynamic> _formatImageData(List<FetchImagesQueryData> data,
+      InputPrecision inputPrecision, Model model) {
     var inputShape = getInputShape(model);
 
     var precisionData = formatImageDataToPrecision(data, inputPrecision, model);

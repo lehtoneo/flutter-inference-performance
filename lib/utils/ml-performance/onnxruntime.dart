@@ -46,13 +46,13 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
       var start = DateTime.now();
       final outputs =
           await session.runAsync(runOptions, inputOrt, session.outputNames);
+      print("Run done");
       var end = DateTime.now();
 
       var timeMs = end.difference(start).inMilliseconds;
 
       if (loadModelOptions.model == Model.mobilenet_edgetpu ||
           loadModelOptions.model == Model.mobilenetv2) {
-        print(outputs?[0]?.value);
         dynamic o = outputs?[0]?.value;
         var t = o[0];
         results.add(SendResultsOptions<List<num>>(
@@ -114,6 +114,13 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
         output?.release();
       }
       i++;
+
+      if (i % 10 == 0) {
+        // send results in batches of 10
+        await resultSender.sendMultipleResultsAsync(
+            loadModelOptions.model, results);
+        results = [];
+      }
     }
 
     print("Inference ready");
@@ -121,11 +128,6 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
     runOptions.release();
 
     OrtEnv.instance.release();
-
-    print("Sending results");
-    await resultSender.sendMultipleResultsAsync(
-        loadModelOptions.model, results);
-    print("Results sent");
 
     return MLInferencePerformanceResult(
         avgPerformanceTimeMs: sum / ttt.length,
@@ -179,16 +181,9 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
     return sessionOptions;
   }
 
-  List<Map<String, OrtValue>>? _prevInputs;
-  LoadModelOptions? _prevLoadModelOptions;
-
   Future<List<Map<String, OrtValue>>> _getInputs(
       {required LoadModelOptions loadModelOptions,
       required List<String> inputNames}) async {
-    // use cached inputs if the same model is used
-    if (_prevLoadModelOptions == loadModelOptions && _prevInputs != null) {
-      return _prevInputs!;
-    }
     var tensors = await _getTensors(loadModelOptions: loadModelOptions);
 
     var inputName = inputNames[0];
@@ -197,14 +192,13 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
       return {inputName: input};
     }).toList();
 
-    _prevInputs = result;
-    _prevLoadModelOptions = loadModelOptions;
+    // _prevInputs = result;
+    //  _prevLoadModelOptions = loadModelOptions;
     return result;
   }
 
-  Future<List<OrtValueTensor>> _getTensors({
-    required LoadModelOptions loadModelOptions,
-  }) async {
+  Future<List<OrtValueTensor>> _getTensors(
+      {required LoadModelOptions loadModelOptions}) async {
     var amount = loadModelOptions.model == Model.deeplabv3 ? 100 : 300;
     var options = FetchImageDataOptions(
         amount: amount, dataset: getModelDataSet(loadModelOptions.model));

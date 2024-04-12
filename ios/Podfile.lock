@@ -10,6 +10,8 @@ PODS:
     - onnxruntime-objc/Core (= 1.15.1)
   - onnxruntime-objc/Core (1.15.1):
     - onnxruntime-c (= 1.15.1)
+  - permission_handler_apple (9.1.1):
+    - Flutter
   - TensorFlowLiteC (2.12.0):
     - TensorFlowLiteC/Core (= 2.12.0)
   - TensorFlowLiteC/Core (2.12.0)
@@ -37,6 +39,7 @@ DEPENDENCIES:
   - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
   - Flutter (from `Flutter`)
   - onnxruntime (from `.symlinks/plugins/onnxruntime/ios`)
+  - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - tflite_flutter (from `.symlinks/plugins/tflite_flutter/ios`)
 
 SPEC REPOS:
@@ -53,6 +56,8 @@ EXTERNAL SOURCES:
     :path: Flutter
   onnxruntime:
     :path: ".symlinks/plugins/onnxruntime/ios"
+  permission_handler_apple:
+    :path: ".symlinks/plugins/permission_handler_apple/ios"
   tflite_flutter:
     :path: ".symlinks/plugins/tflite_flutter/ios"
 
@@ -62,6 +67,7 @@ SPEC CHECKSUMS:
   onnxruntime: e9346181d75b8dea8733bdae512a22c298962e00
   onnxruntime-c: ebdcfd8650bcbd10121c125262f99dea681b92a3
   onnxruntime-objc: ae7acec7a3d03eaf072d340afed7a35635c1c2a6
+  permission_handler_apple: e76247795d700c14ea09e3a2d8855d41ee80a2e6
   TensorFlowLiteC: 20785a69299185a379ba9852b6625f00afd7984a
   TensorFlowLiteSwift: 3a4928286e9e35bdd3e17970f48e53c80d25e793
   tflite_flutter: 9433d086a3060431bbc9f3c7c20d017db0e72d08
