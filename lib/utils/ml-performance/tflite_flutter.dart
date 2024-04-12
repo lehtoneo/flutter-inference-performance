@@ -1,118 +1,20 @@
 // ignore_for_file: avoid_print
 
-import 'dart:typed_data';
-
 import 'package:inference_test/utils/ml-performance/common.dart';
-import 'package:inference_test/utils/results.dart';
 import 'package:inference_test/utils/data.dart';
 import 'package:inference_test/utils/models.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 
 enum TFLiteDelegate { coreML, nnapi, gpu, cpu }
 
-class TFLitePerformanceTester extends PerformanceTester {
+class TFLitePerformanceTester
+    extends PerformanceTester<IsolateInterpreter, dynamic, dynamic> {
   @override
   String get libraryName => "tflite_flutter";
 
   @override
   List<DelegateOption> getLibraryDelegateOptions() {
     return DelegateOption.values;
-  }
-
-  @override
-  Future<MLInferencePerformanceResult> testPerformance({
-    required LoadModelOptions loadModelOptions,
-  }) async {
-    var interpreter = await _loadTFLiteModel(loadModelOptions);
-
-    // cache inputs if the same model is used
-
-    var fastestTimeMs = double.infinity;
-    var slowestTimeMs = 0.0;
-    var sum = 0.0;
-
-    ResultSender resultSender = ResultSender();
-
-    var resultsId = DateTime.now().millisecondsSinceEpoch.toString();
-    var sendResultsOptions = SendResultsOptions<dynamic>(
-        resultsId: resultsId,
-        inputIndex: 0,
-        precision: loadModelOptions.inputPrecision,
-        library: libraryName,
-        output: null,
-        inferenceTimeMs: 0,
-        model: loadModelOptions.model,
-        delegate: loadModelOptions.delegate);
-
-    var batchSize = 25;
-    var maxAmount = loadModelOptions.model == Model.deeplabv3 ? 100 : 300;
-
-    for (var i = 0; i < maxAmount;) {
-      List<SendResultsOptions<dynamic>> results = [];
-      final inputs = await _getFormattedImageData(
-          model: loadModelOptions.model,
-          inputPrecision: loadModelOptions.inputPrecision,
-          skip: i,
-          batchSize: batchSize);
-      for (var input in inputs) {
-        sendResultsOptions.inputIndex = i;
-        var output = _getOutPutTensor(
-            loadModelOptions.model, loadModelOptions.inputPrecision);
-        var startTime = DateTime.now();
-        await interpreter.runForMultipleInputs([
-          [input]
-        ], output);
-        var endTime = DateTime.now();
-
-        var timeMs = endTime.difference(startTime).inMilliseconds;
-
-        if (loadModelOptions.model == Model.mobilenet_edgetpu ||
-            loadModelOptions.model == Model.mobilenetv2) {
-          sendResultsOptions.output = output[0][0];
-        }
-
-        if (loadModelOptions.model == Model.ssd_mobilenet) {
-          sendResultsOptions.output = [
-            output[0][0][0][0],
-            output[1][0],
-            output[2][0],
-            output[3]
-          ];
-        }
-
-        if (loadModelOptions.model == Model.deeplabv3) {
-          sendResultsOptions.output = output[0][0];
-        }
-
-        sendResultsOptions.inferenceTimeMs = timeMs.toDouble();
-        sendResultsOptions.inputIndex = i;
-        results.add(sendResultsOptions);
-
-        if (timeMs < fastestTimeMs) {
-          fastestTimeMs = timeMs.toDouble();
-        }
-
-        if (timeMs > slowestTimeMs) {
-          slowestTimeMs = timeMs.toDouble();
-        }
-
-        sum += timeMs;
-        i++;
-
-        print("Inference Time: ${timeMs}ms");
-      }
-
-      await resultSender.sendMultipleResultsAsync(
-          loadModelOptions.model, results);
-      results = [];
-    }
-
-    interpreter.close();
-
-    return MLInferencePerformanceResult(
-        avgPerformanceTimeMs: sum / maxAmount,
-        fastestTimeMs: fastestTimeMs,
-        slowestTimeMs: slowestTimeMs);
   }
 
   dynamic _getOutPutTensor(Model model, InputPrecision inputPrecision) {
@@ -164,7 +66,7 @@ class TFLitePerformanceTester extends PerformanceTester {
 
     var precisionData = formatImageDataToPrecision(data, inputPrecision, model);
     var reshaped = precisionData.map((e) => e.reshape(inputShape)).toList();
-
+    print(reshaped.shape);
     print("Data formatted");
     return reshaped;
   }
@@ -211,5 +113,72 @@ class TFLitePerformanceTester extends PerformanceTester {
     }
 
     return interPreterOptions;
+  }
+
+  @override
+  Future<IsolateInterpreter> loadModelAsync(LoadModelOptions loadModelOptions) {
+    // TODO: implement loadModelAsync
+    return _loadTFLiteModel(loadModelOptions);
+  }
+
+  @override
+  Future<List> getFormattedInputs(
+      {required LoadModelOptions loadModelOptions,
+      required IsolateInterpreter model,
+      required int skip,
+      required int batchSize}) {
+    return _getFormattedImageData(
+        model: loadModelOptions.model,
+        inputPrecision: loadModelOptions.inputPrecision,
+        skip: skip,
+        batchSize: batchSize);
+  }
+
+  @override
+  formatMobileNetEdgeTpuOutput(out) {
+    return out[0][0];
+  }
+
+  @override
+  Future runInference(
+      {required model,
+      required input,
+      required outputTensor,
+      required LoadModelOptions loadModelOptions}) async {
+    var output = _getOutPutTensor(
+        loadModelOptions.model, loadModelOptions.inputPrecision);
+    await model.runForMultipleInputs([input], output);
+    return output;
+  }
+
+  @override
+  Future<void> closeModel(IsolateInterpreter model) {
+    model.close();
+    return Future.value();
+  }
+
+  @override
+  formatDeepLabV3Output(out) {
+    return out[0][0];
+  }
+
+  @override
+  formatMobileNetV2Output(out) {
+    return formatMobileNetEdgeTpuOutput(out);
+  }
+
+  @override
+  formatSSDMobileNetOutput(output) {
+    return [output[0][0][0][0], output[1][0], output[2][0], output[3]];
+  }
+
+  @override
+  Future onAfterInputRun({required input, required output}) async {}
+
+  @override
+  Future<dynamic> getOutputTensor(
+      {required LoadModelOptions loadModelOptions}) async {
+    return _getOutPutTensor(
+        loadModelOptions.model, loadModelOptions.inputPrecision);
   }
 }

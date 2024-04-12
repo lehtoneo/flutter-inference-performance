@@ -20,7 +20,7 @@ class _PerformanceTesterWidgetState extends State<PerformanceTesterWidget> {
   _PerformanceTesterWidgetState({required this.performanceTester});
 
   int _run = 0;
-  int _runTimes = 5;
+  int _runTimes = 1;
   bool _isRunning = false;
   String? _error;
   MLInferencePerformanceResult? _inferencePerformanceResult;
@@ -36,8 +36,6 @@ class _PerformanceTesterWidgetState extends State<PerformanceTesterWidget> {
       _isRunning = true;
       _error = null;
     });
-
-    print(performanceTester.getDelegateOptions());
 
     int run = 0;
 
@@ -86,7 +84,7 @@ class _PerformanceTesterWidgetState extends State<PerformanceTesterWidget> {
           },
           delegates: performanceTester.getDelegateOptions(),
         ),
-        Text("Run $_run / _$_runTimes times"),
+        Text("Run $_run / $_runTimes times"),
         ElevatedButton(
           onPressed: _runInference,
           child: const Text("Run"),

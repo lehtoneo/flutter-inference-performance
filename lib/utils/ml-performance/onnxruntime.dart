@@ -4,127 +4,14 @@ import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:inference_test/utils/ml-performance/common.dart';
-import 'package:inference_test/utils/results.dart';
 import 'package:onnxruntime/onnxruntime.dart';
 import 'package:inference_test/utils/data.dart';
 import 'package:inference_test/utils/models.dart';
 
-class ONNXRuntimePerformanceTester extends PerformanceTester {
+class ONNXRuntimePerformanceTester
+    extends PerformanceTester<OrtSession, Map<String, OrtValue>, Null> {
   @override
-  String get libraryName => "onnxruntime";
-
-  @override
-  Future<MLInferencePerformanceResult> testPerformance(
-      {required LoadModelOptions loadModelOptions}) async {
-    print(
-        "Loading model: ${loadModelOptions.model} with input precision: ${loadModelOptions.inputPrecision}");
-
-    final session = await _getOrtSessionAsync(loadModelOptions);
-
-    final runOptions = OrtRunOptions();
-
-    // wait for the model to be ready
-    await Future.delayed(const Duration(seconds: 1));
-
-    var fastestTimeMs = double.infinity;
-    var slowestTimeMs = 0.0;
-    var sum = 0.0;
-
-    var resultSender = ResultSender();
-    var resultsId = DateTime.now().millisecondsSinceEpoch.toString();
-    var sendResultsOptions = SendResultsOptions<dynamic>(
-        resultsId: resultsId,
-        inputIndex: 0,
-        precision: loadModelOptions.inputPrecision,
-        library: libraryName,
-        output: null,
-        inferenceTimeMs: 0,
-        model: loadModelOptions.model,
-        delegate: loadModelOptions.delegate);
-
-    var batchSize = 25;
-    var maxAmount = loadModelOptions.model == Model.deeplabv3 ? 100 : 300;
-
-    print("Running inference");
-    for (var i = 0; i < maxAmount;) {
-      List<SendResultsOptions<dynamic>> results = [];
-      var options = FetchImageDataOptions(
-          amount: batchSize,
-          dataset: getModelDataSet(loadModelOptions.model),
-          skip: i);
-      var data = await DataService().fetchImageData(options: options);
-
-      var inputs = await _getFormattedInputs(
-          loadModelOptions: loadModelOptions,
-          data: data,
-          inputNames: session.inputNames);
-
-      for (var data in inputs) {
-        print("run");
-        var start = DateTime.now();
-        final outputs =
-            await session.runAsync(runOptions, data, session.outputNames);
-        print("Run done");
-        var end = DateTime.now();
-
-        var timeMs = end.difference(start).inMilliseconds;
-
-        if (loadModelOptions.model == Model.mobilenet_edgetpu ||
-            loadModelOptions.model == Model.mobilenetv2) {
-          dynamic o = outputs?[0]?.value;
-          var t = o[0];
-          sendResultsOptions.output = t;
-        }
-
-        if (loadModelOptions.model == Model.ssd_mobilenet) {
-          dynamic o0 = outputs?[0]?.value;
-          dynamic o1 = outputs?[1]?.value;
-          dynamic o2 = outputs?[2]?.value;
-          dynamic o3 = outputs?[3]?.value;
-
-          sendResultsOptions.output = [o0[0][0], o1[0], o2[0], o3];
-        }
-
-        if (loadModelOptions.model == Model.deeplabv3) {
-          dynamic o = outputs?[0]?.value;
-          sendResultsOptions.output = o[0];
-        }
-        sendResultsOptions.inferenceTimeMs = timeMs.toDouble();
-        sendResultsOptions.inputIndex = i;
-        results.add(sendResultsOptions);
-        print(timeMs);
-
-        if (timeMs < fastestTimeMs) {
-          fastestTimeMs = timeMs.toDouble();
-        }
-        if (timeMs > slowestTimeMs) {
-          slowestTimeMs = timeMs.toDouble();
-        }
-        sum += timeMs;
-
-        for (var key in data.keys) {
-          data[key]?.release();
-        }
-
-        for (var output in outputs ?? []) {
-          output?.release();
-        }
-        i++;
-      }
-
-      await resultSender.sendMultipleResultsAsync(
-          loadModelOptions.model, results);
-    }
-    session.release();
-    runOptions.release();
-
-    OrtEnv.instance.release();
-
-    return MLInferencePerformanceResult(
-        avgPerformanceTimeMs: sum / maxAmount,
-        fastestTimeMs: fastestTimeMs,
-        slowestTimeMs: slowestTimeMs);
-  }
+  String get libraryName => "onnxruntime_flutter";
 
   @override
   List<DelegateOption> getLibraryDelegateOptions() {
@@ -205,7 +92,7 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
     var tensors = precisionData.map((e) {
       if (loadModelOptions.inputPrecision == InputPrecision.uint8) {
         var tensor = OrtValueTensor.createTensorWithDataList(
-            Uint8List.fromList(e as List<int>), [1, ...inputShape]);
+            Uint8List.fromList(e as List<int>), [...inputShape]);
         return tensor;
       } else {
         var tensor = OrtValueTensor.createTensorWithDataList(
@@ -215,5 +102,96 @@ class ONNXRuntimePerformanceTester extends PerformanceTester {
     }).toList();
     print("Data ready");
     return tensors;
+  }
+
+  @override
+  Future<void> closeModel(model) {
+    model.release();
+    OrtEnv.instance.release();
+    return Future.value();
+  }
+
+  @override
+  formatMobileNetEdgeTpuOutput(out) {
+    dynamic o = out?[0]?.value;
+    var t = o[0];
+    return t;
+  }
+
+  @override
+  Future<List<Map<String, OrtValue>>> getFormattedInputs(
+      {required LoadModelOptions loadModelOptions,
+      required OrtSession model,
+      required int skip,
+      required int batchSize}) async {
+    var options = FetchImageDataOptions(
+        amount: batchSize,
+        dataset: getModelDataSet(loadModelOptions.model),
+        skip: skip);
+    var data = await DataService().fetchImageData(options: options);
+
+    var inputs = await _getFormattedInputs(
+        loadModelOptions: loadModelOptions,
+        data: data,
+        inputNames: model.inputNames);
+
+    return inputs;
+  }
+
+  @override
+  Future<OrtSession> loadModelAsync(LoadModelOptions loadModelOptions) async {
+    return await _getOrtSessionAsync(loadModelOptions);
+  }
+
+  @override
+  Future runInference(
+      {required model,
+      required input,
+      required outputTensor,
+      required LoadModelOptions loadModelOptions}) async {
+    return await model.runAsync(OrtRunOptions(), input, model.outputNames);
+  }
+
+  @override
+  formatDeepLabV3Output(outputs) {
+    dynamic o = outputs?[0]?.value;
+
+    return o[0];
+  }
+
+  @override
+  formatMobileNetV2Output(out) {
+    return formatMobileNetEdgeTpuOutput(out);
+  }
+
+  @override
+  formatSSDMobileNetOutput(outputs) {
+    dynamic o0 = outputs?[0]?.value;
+    dynamic o1 = outputs?[1]?.value;
+    dynamic o2 = outputs?[2]?.value;
+    dynamic o3 = outputs?[3]?.value;
+
+    return [o0[0][0], o1[0], o2[0], o3];
+  }
+
+  @override
+  Future onAfterInputRun(
+      {required Map<String, OrtValue> input, required dynamic output}) {
+    for (var key in input.keys) {
+      input[key]?.release();
+    }
+
+    for (var out in output ?? []) {
+      out?.release();
+    }
+
+    return Future.value();
+  }
+
+  @override
+  Future<Null> getOutputTensor(
+      {required LoadModelOptions loadModelOptions}) async {
+    // TODO: implement getOutputTensor
+    return null;
   }
 }
