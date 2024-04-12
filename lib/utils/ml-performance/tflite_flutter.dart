@@ -34,6 +34,15 @@ class TFLitePerformanceTester extends PerformanceTester {
     ResultSender resultSender = ResultSender();
 
     var resultsId = DateTime.now().millisecondsSinceEpoch.toString();
+    var sendResultsOptions = SendResultsOptions<dynamic>(
+        resultsId: resultsId,
+        inputIndex: 0,
+        precision: loadModelOptions.inputPrecision,
+        library: libraryName,
+        output: null,
+        inferenceTimeMs: 0,
+        model: loadModelOptions.model,
+        delegate: loadModelOptions.delegate);
 
     var batchSize = 25;
     var maxAmount = loadModelOptions.model == Model.deeplabv3 ? 100 : 300;
@@ -46,6 +55,7 @@ class TFLitePerformanceTester extends PerformanceTester {
           skip: i,
           batchSize: batchSize);
       for (var input in inputs) {
+        sendResultsOptions.inputIndex = i;
         var output = _getOutPutTensor(
             loadModelOptions.model, loadModelOptions.inputPrecision);
         var startTime = DateTime.now();
@@ -58,40 +68,25 @@ class TFLitePerformanceTester extends PerformanceTester {
 
         if (loadModelOptions.model == Model.mobilenet_edgetpu ||
             loadModelOptions.model == Model.mobilenetv2) {
-          results.add(SendResultsOptions<dynamic>(
-              resultsId: resultsId,
-              inputIndex: i,
-              precision: loadModelOptions.inputPrecision,
-              library: libraryName,
-              output: output[0][0],
-              inferenceTimeMs: timeMs.toDouble(),
-              model: loadModelOptions.model,
-              delegate: loadModelOptions.delegate));
+          sendResultsOptions.output = output[0][0];
         }
 
         if (loadModelOptions.model == Model.ssd_mobilenet) {
-          results.add(SendResultsOptions<List<dynamic>>(
-              resultsId: resultsId,
-              inputIndex: i,
-              precision: loadModelOptions.inputPrecision,
-              library: libraryName,
-              output: [output[0][0][0], output[1][0], output[2][0], output[3]],
-              inferenceTimeMs: timeMs.toDouble(),
-              model: loadModelOptions.model,
-              delegate: loadModelOptions.delegate));
+          sendResultsOptions.output = [
+            output[0][0][0][0],
+            output[1][0],
+            output[2][0],
+            output[3]
+          ];
         }
 
         if (loadModelOptions.model == Model.deeplabv3) {
-          results.add(SendResultsOptions<dynamic>(
-              resultsId: resultsId,
-              inputIndex: i,
-              precision: loadModelOptions.inputPrecision,
-              library: libraryName,
-              output: output[0][0],
-              inferenceTimeMs: timeMs.toDouble(),
-              model: loadModelOptions.model,
-              delegate: loadModelOptions.delegate));
+          sendResultsOptions.output = output[0][0];
         }
+
+        sendResultsOptions.inferenceTimeMs = timeMs.toDouble();
+        sendResultsOptions.inputIndex = i;
+        results.add(sendResultsOptions);
 
         if (timeMs < fastestTimeMs) {
           fastestTimeMs = timeMs.toDouble();
