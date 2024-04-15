@@ -66,7 +66,6 @@ class TFLitePerformanceTester
 
     var precisionData = formatImageDataToPrecision(data, inputPrecision, model);
     var reshaped = precisionData.map((e) => e.reshape(inputShape)).toList();
-    print(reshaped.shape);
     print("Data formatted");
     return reshaped;
   }

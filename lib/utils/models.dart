@@ -18,6 +18,11 @@ class LoadModelOptions {
       {required this.model,
       required this.inputPrecision,
       required this.delegate});
+
+  @override
+  String toString() {
+    return 'LoadModelOptions{model: $model, inputPrecision: $inputPrecision, delegate: $delegate}';
+  }
 }
 
 class ModelsUtil {

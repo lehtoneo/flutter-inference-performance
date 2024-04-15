@@ -177,14 +177,8 @@ abstract class PerformanceTester<ModelType, InputType, OutputTensorType>
 
         sum += timeMs;
         i++;
-
-        print("Inference Time: ${timeMs}ms");
       }
 
-      results.forEach((element) {
-        print(element.inferenceTimeMs);
-        print(element.inputIndex);
-      });
       await resultSender.sendMultipleResultsAsync(
           loadModelOptions.model, results);
       results = [];
