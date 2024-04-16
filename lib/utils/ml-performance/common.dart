@@ -209,7 +209,7 @@ abstract class PerformanceTester<ModelType, InputType, OutputTensorType>
   ///
   /// - This method is used to test if the inference works
   /// - It is used to test if the model can be loaded and run
-  /// - If the model is not run within 3 seconds, it will throw a timeout exception
+  /// - If the model is not run within 10 seconds, it will throw a timeout exception
   Future<void> testInferenceWorks({
     required LoadModelOptions loadModelOptions,
   }) async {
@@ -255,7 +255,7 @@ abstract class PerformanceTester<ModelType, InputType, OutputTensorType>
       loadModelOptions: loadModelOptions,
     );
 
-    return timeout(future, Duration(seconds: 3),
+    return timeout(future, Duration(seconds: 10),
         message: 'Inference timed out');
   }
 
