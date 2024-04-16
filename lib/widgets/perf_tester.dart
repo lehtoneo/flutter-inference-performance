@@ -99,6 +99,10 @@ class _PerformanceTesterWidgetState extends State<PerformanceTesterWidget> {
             _loadModelOptions = loadModelOptions;
           });
           await _runInference(loadModelOptions);
+
+          setState(() {
+            performedRuns.add(currentRun!);
+          });
         }
       }
     }
