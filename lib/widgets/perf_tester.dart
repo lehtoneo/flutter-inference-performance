@@ -20,7 +20,7 @@ class _PerformanceTesterWidgetState extends State<PerformanceTesterWidget> {
   _PerformanceTesterWidgetState({required this.performanceTester});
 
   int _run = 0;
-  int _runTimes = 1;
+  int _runTimes = 5;
   bool _isRunning = false;
   String? _error;
   MLInferencePerformanceResult? _inferencePerformanceResult;
@@ -34,6 +34,7 @@ class _PerformanceTesterWidgetState extends State<PerformanceTesterWidget> {
   List<DelegateOption> get delegates => performanceTester.getDelegateOptions();
   int get testsAmount => models.length * precisions.length * delegates.length;
   List<String> performedRuns = [];
+  String? currentRun;
 
   Future<String?> _runInference(LoadModelOptions loadModelOptions) async {
     if (_isRunning) return null;
@@ -82,6 +83,13 @@ class _PerformanceTesterWidgetState extends State<PerformanceTesterWidget> {
     for (var model in models) {
       for (var precision in precisions) {
         for (var delegate in delegates) {
+          setState(() {
+            currentRun = "Running $model with $precision and $delegate";
+          });
+
+          print("Sleeping for 3 seconds");
+          await Future.delayed(Duration(seconds: 3));
+
           var loadModelOptions = LoadModelOptions(
             model: model,
             inputPrecision: precision,
@@ -90,14 +98,7 @@ class _PerformanceTesterWidgetState extends State<PerformanceTesterWidget> {
           setState(() {
             _loadModelOptions = loadModelOptions;
           });
-          var error = await _runInference(loadModelOptions);
-          var performedString = "$model - $precision - $delegate" +
-              (error != null ? " - ($error)" : "");
-          setState(() {
-            performedRuns.add(performedString);
-          });
-          print("Sleeping for 10 seconds");
-          await Future.delayed(Duration(seconds: 10));
+          await _runInference(loadModelOptions);
         }
       }
     }
@@ -111,11 +112,7 @@ class _PerformanceTesterWidgetState extends State<PerformanceTesterWidget> {
           Text(performanceTester.libraryName, style: TextStyle(fontSize: 24)),
           Text("Tests amount: $testsAmount", style: TextStyle(fontSize: 24)),
           Text("Performed runs: ${performedRuns.length}"),
-          Column(
-            children: performedRuns
-                .map((e) => Text(e, style: TextStyle(fontSize: 12)))
-                .toList(),
-          ),
+          Text("Current run $currentRun"),
           ElevatedButton(
             onPressed: _runAll,
             child: const Text("Run all"),
@@ -130,7 +127,7 @@ class _PerformanceTesterWidgetState extends State<PerformanceTesterWidget> {
             },
             delegates: performanceTester.getDelegateOptions(),
           ),
-          Text("Run c_run / $_runTimes times"),
+          Text("Run  $_run / $_runTimes times"),
           ElevatedButton(
             onPressed: () => _runInference(_loadModelOptions),
             child: const Text("Run"),
