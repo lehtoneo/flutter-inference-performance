@@ -15,9 +15,12 @@ class _OnnxTestState extends State<OnnxTest> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [PerformanceTesterWidget(performanceTester: runner)]),
+        child: SingleChildScrollView(
+            child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+              PerformanceTesterWidget(performanceTester: runner)
+            ])),
       ),
     );
   }

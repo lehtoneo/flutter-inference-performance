@@ -14,13 +14,11 @@ class _TfTestState extends State<TfTest> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            PerformanceTesterWidget(
-                performanceTester: TFLitePerformanceTester())
-          ],
-        ),
+        child: SingleChildScrollView(
+            child:
+                Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          PerformanceTesterWidget(performanceTester: TFLitePerformanceTester())
+        ])),
       ),
     );
   }
