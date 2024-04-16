@@ -118,9 +118,7 @@ abstract class PerformanceTester<ModelType, InputType, OutputTensorType>
             delegate: loadModelOptions.delegate)));
 
     if (hasResults) {
-      print("Results already exist for this model");
-      return MLInferencePerformanceResult(
-          avgPerformanceTimeMs: 0.0, fastestTimeMs: 0.0, slowestTimeMs: 0.0);
+      throw Exception("Results already exist for this model");
     }
 
     await testInferenceWorks(loadModelOptions: loadModelOptions);
