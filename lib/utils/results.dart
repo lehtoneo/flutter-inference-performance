@@ -94,6 +94,21 @@ class ResultSender {
     return result;
   }
 
+  Future<bool> hasResults(SendResultsApiOptions options) async {
+    options.deviceModelName = await _getDeviceModelName();
+    var result = await http.post(
+      Uri.parse("$_baseUrl/has-results"),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(options),
+    );
+    if (result.statusCode == 404) {
+      return false;
+    }
+    return true;
+  }
+
   String getModelApiPathName(Model model) {
     switch (model) {
       case Model.mobilenet_edgetpu:

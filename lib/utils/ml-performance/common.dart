@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'dart:async';
 
+import 'package:inference_test/utils/common.dart';
 import 'package:inference_test/utils/data.dart';
 import 'package:inference_test/utils/models.dart';
 import 'package:inference_test/utils/results.dart';
@@ -102,17 +104,31 @@ abstract class PerformanceTester<ModelType, InputType, OutputTensorType>
   Future<MLInferencePerformanceResult> testPerformance({
     required LoadModelOptions loadModelOptions,
   }) async {
-    var model = await loadModelAsync(loadModelOptions);
+    ResultSender resultSender = ResultSender();
+    var resultsId = DateTime.now().millisecondsSinceEpoch.toString();
+    var hasResults = await resultSender.hasResults(SendResultsApiOptions(
+        options: new SendResultsOptions<dynamic>(
+            resultsId: resultsId,
+            inputIndex: 0,
+            precision: loadModelOptions.inputPrecision,
+            library: libraryName,
+            output: null,
+            inferenceTimeMs: 0,
+            model: loadModelOptions.model,
+            delegate: loadModelOptions.delegate)));
 
-    // cache inputs if the same model is used
+    if (hasResults) {
+      print("Results already exist for this model");
+      return MLInferencePerformanceResult(
+          avgPerformanceTimeMs: 0.0, fastestTimeMs: 0.0, slowestTimeMs: 0.0);
+    }
+
+    await testInferenceWorks(loadModelOptions: loadModelOptions);
+    var model = await loadModelAsync(loadModelOptions);
 
     var fastestTimeMs = double.infinity;
     var slowestTimeMs = 0.0;
     var sum = 0.0;
-
-    ResultSender resultSender = ResultSender();
-
-    var resultsId = DateTime.now().millisecondsSinceEpoch.toString();
 
     var batchSize = 10;
     var maxAmount = loadModelOptions.model == Model.deeplabv3 ? 100 : 300;
@@ -190,6 +206,59 @@ abstract class PerformanceTester<ModelType, InputType, OutputTensorType>
         avgPerformanceTimeMs: sum / maxAmount,
         fastestTimeMs: fastestTimeMs,
         slowestTimeMs: slowestTimeMs);
+  }
+
+  ///
+  /// - This method is used to test if the inference works
+  /// - It is used to test if the model can be loaded and run
+  /// - If the model is not run within 3 seconds, it will throw a timeout exception
+  Future<void> testInferenceWorks({
+    required LoadModelOptions loadModelOptions,
+  }) async {
+    var model = await loadModelAsync(loadModelOptions);
+
+    var inputs = await getFormattedInputs(
+        loadModelOptions: loadModelOptions,
+        model: model,
+        skip: 0,
+        batchSize: 1);
+
+    var input = inputs.first;
+
+    var outputTensor =
+        await getOutputTensor(loadModelOptions: loadModelOptions);
+
+    try {
+      var output = await _runInferenceWithTimeout(
+          model: model,
+          input: input,
+          outputTensor: outputTensor,
+          loadModelOptions: loadModelOptions);
+
+      await onAfterInputRun(input: input, output: output);
+    } catch (e) {
+      print("Inference failed: $e");
+      rethrow;
+    }
+
+    closeModel(model);
+  }
+
+  Future<dynamic> _runInferenceWithTimeout({
+    required ModelType model,
+    required dynamic input,
+    required dynamic outputTensor,
+    required LoadModelOptions loadModelOptions,
+  }) async {
+    final future = runInference(
+      model: model,
+      input: input,
+      outputTensor: outputTensor,
+      loadModelOptions: loadModelOptions,
+    );
+
+    return timeout(future, Duration(seconds: 3),
+        message: 'Inference timed out');
   }
 
   List<DelegateOption> getLibraryDelegateOptions();
