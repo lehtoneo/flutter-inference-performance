@@ -1,11 +1,11 @@
 // ignore_for_file: avoid_print
 
+import 'dart:io';
+
 import 'package:inference_test/utils/ml-performance/common.dart';
 import 'package:inference_test/utils/data.dart';
 import 'package:inference_test/utils/models.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
-
-enum TFLiteDelegate { coreML, nnapi, gpu, cpu }
 
 class TFLitePerformanceTester
     extends PerformanceTester<IsolateInterpreter, dynamic, dynamic> {
@@ -14,7 +14,15 @@ class TFLitePerformanceTester
 
   @override
   List<DelegateOption> getLibraryDelegateOptions() {
-    return DelegateOption.values;
+    if (Platform.isAndroid) {
+      return DelegateOption.values;
+    } else if (Platform.isIOS) {
+      var all = DelegateOption.values;
+      // the gpu and metal delegate are the same for ios
+      return all.where((element) => element != DelegateOption.gpu).toList();
+    } else {
+      throw Exception("Unknown platform");
+    }
   }
 
   dynamic _getOutPutTensor(Model model, InputPrecision inputPrecision) {
