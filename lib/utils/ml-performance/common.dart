@@ -145,8 +145,8 @@ abstract class PerformanceTester<ModelType, InputType, OutputTensorType>
           skip: i,
           batchSize: batchSize);
       for (var input in inputs) {
-        var outputTensor =
-            await getOutputTensor(loadModelOptions: loadModelOptions);
+        var outputTensor = getOutputTensor(loadModelOptions: loadModelOptions);
+
         var startTime = DateTime.now();
         var output = await runInference(
             model: model,
@@ -229,8 +229,7 @@ abstract class PerformanceTester<ModelType, InputType, OutputTensorType>
 
     var input = inputs.first;
 
-    var outputTensor =
-        await getOutputTensor(loadModelOptions: loadModelOptions);
+    var outputTensor = getOutputTensor(loadModelOptions: loadModelOptions);
 
     try {
       var output = await _runInferenceWithTimeout(
@@ -292,7 +291,7 @@ abstract class PerformanceTester<ModelType, InputType, OutputTensorType>
       required OutputTensorType outputTensor,
       required LoadModelOptions loadModelOptions});
 
-  Future<OutputTensorType> getOutputTensor(
+  OutputTensorType getOutputTensor(
       {required LoadModelOptions loadModelOptions});
 
   Future<void> closeModel(ModelType model);

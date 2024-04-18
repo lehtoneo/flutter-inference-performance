@@ -82,9 +82,6 @@ class TFLitePerformanceTester
     final interpreter =
         await Interpreter.fromAsset(modelPath, options: interPreterOptions);
 
-    final isolateInterpreter =
-        await IsolateInterpreter.create(address: interpreter.address);
-
     // lets sleep so that the interpreter is ready to perform inference
     // If this is not done, a error is thrown if inference is performed immediately
     await Future.delayed(const Duration(seconds: 1));
@@ -175,8 +172,7 @@ class TFLitePerformanceTester
   Future onAfterInputRun({required input, required output}) async {}
 
   @override
-  Future<dynamic> getOutputTensor(
-      {required LoadModelOptions loadModelOptions}) async {
+  dynamic getOutputTensor({required LoadModelOptions loadModelOptions}) async {
     return _getOutPutTensor(
         loadModelOptions.model, loadModelOptions.inputPrecision);
   }

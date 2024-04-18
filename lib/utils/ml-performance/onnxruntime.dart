@@ -59,9 +59,9 @@ class ONNXRuntimePerformanceTester
     return sessionOptions;
   }
 
-  Future<List<Map<String, OrtValue>>> _getInputs(
+  List<Map<String, OrtValue>> _getInputs(
       {required List<OrtValueTensor> tensors,
-      required List<String> inputNames}) async {
+      required List<String> inputNames}) {
     var inputName = inputNames[0];
     var result = tensors.map((e) {
       var input = e;
@@ -71,19 +71,18 @@ class ONNXRuntimePerformanceTester
     return result;
   }
 
-  Future<List<Map<String, OrtValue>>> _getFormattedInputs(
+  List<Map<String, OrtValue>> _getFormattedInputs(
       {required LoadModelOptions loadModelOptions,
       required List<FetchImagesQueryData> data,
-      required List<String> inputNames}) async {
-    var tensors =
-        await _getTensors(loadModelOptions: loadModelOptions, data: data);
+      required List<String> inputNames}) {
+    var tensors = _getTensors(loadModelOptions: loadModelOptions, data: data);
 
     return _getInputs(tensors: tensors, inputNames: inputNames);
   }
 
-  Future<List<OrtValueTensor>> _getTensors(
+  List<OrtValueTensor> _getTensors(
       {required LoadModelOptions loadModelOptions,
-      required List<FetchImagesQueryData> data}) async {
+      required List<FetchImagesQueryData> data}) {
     var inputShape = getInputShape(loadModelOptions.model);
 
     var precisionData = formatImageDataToPrecision(
@@ -130,7 +129,7 @@ class ONNXRuntimePerformanceTester
         skip: skip);
     var data = await DataService().fetchImageData(options: options);
 
-    var inputs = await _getFormattedInputs(
+    var inputs = _getFormattedInputs(
         loadModelOptions: loadModelOptions,
         data: data,
         inputNames: model.inputNames);
@@ -189,8 +188,7 @@ class ONNXRuntimePerformanceTester
   }
 
   @override
-  Future<Null> getOutputTensor(
-      {required LoadModelOptions loadModelOptions}) async {
+  Null getOutputTensor({required LoadModelOptions loadModelOptions}) {
     // TODO: implement getOutputTensor
     return null;
   }
