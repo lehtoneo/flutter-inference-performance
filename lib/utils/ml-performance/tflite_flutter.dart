@@ -8,7 +8,7 @@ import 'package:inference_test/utils/models.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 
 class TFLitePerformanceTester
-    extends PerformanceTester<IsolateInterpreter, dynamic, dynamic> {
+    extends PerformanceTester<Interpreter, dynamic, dynamic> {
   @override
   String get libraryName => "tflite_flutter";
 
@@ -78,7 +78,7 @@ class TFLitePerformanceTester
     return reshaped;
   }
 
-  Future<IsolateInterpreter> _loadTFLiteModel(LoadModelOptions options) async {
+  Future<Interpreter> _loadTFLiteModel(LoadModelOptions options) async {
     print(
         "Loading model: ${options.model} with input precision: ${options.inputPrecision}");
 
@@ -90,14 +90,11 @@ class TFLitePerformanceTester
     final interpreter =
         await Interpreter.fromAsset(modelPath, options: interPreterOptions);
 
-    final isolateInterpreter =
-        await IsolateInterpreter.create(address: interpreter.address);
-
     // lets sleep so that the interpreter is ready to perform inference
     // If this is not done, a error is thrown if inference is performed immediately
     await Future.delayed(const Duration(seconds: 1));
 
-    return isolateInterpreter;
+    return interpreter;
   }
 
   InterpreterOptions _getInterpreterOptions(LoadModelOptions loadModelOptions) {
@@ -111,7 +108,7 @@ class TFLitePerformanceTester
     } else if (loadModelOptions.delegate == DelegateOption.metal) {
       interPreterOptions.useMetalDelegateForIOS = true;
     } else if (loadModelOptions.delegate == DelegateOption.gpu) {
-      interPreterOptions.addDelegate(GpuDelegate());
+      interPreterOptions.addDelegate(GpuDelegateV2());
     } else if (loadModelOptions.delegate == DelegateOption.xnnpack) {
       interPreterOptions.addDelegate(XNNPackDelegate());
     } else if (loadModelOptions.delegate == DelegateOption.cpu) {
@@ -123,7 +120,7 @@ class TFLitePerformanceTester
   }
 
   @override
-  Future<IsolateInterpreter> loadModelAsync(LoadModelOptions loadModelOptions) {
+  Future<Interpreter> loadModelAsync(LoadModelOptions loadModelOptions) {
     // TODO: implement loadModelAsync
     return _loadTFLiteModel(loadModelOptions);
   }
@@ -131,7 +128,7 @@ class TFLitePerformanceTester
   @override
   Future<List> getFormattedInputs(
       {required LoadModelOptions loadModelOptions,
-      required IsolateInterpreter model,
+      required Interpreter model,
       required int skip,
       required int batchSize}) {
     return _getFormattedImageData(
@@ -154,12 +151,12 @@ class TFLitePerformanceTester
       required LoadModelOptions loadModelOptions}) async {
     var output = _getOutPutTensor(
         loadModelOptions.model, loadModelOptions.inputPrecision);
-    await model.runForMultipleInputs([input], output);
+    model.runForMultipleInputs([input], output);
     return output;
   }
 
   @override
-  Future<void> closeModel(IsolateInterpreter model) {
+  Future<void> closeModel(Interpreter model) {
     model.close();
     return Future.value();
   }
@@ -183,8 +180,7 @@ class TFLitePerformanceTester
   Future onAfterInputRun({required input, required output}) async {}
 
   @override
-  Future<dynamic> getOutputTensor(
-      {required LoadModelOptions loadModelOptions}) async {
+  dynamic getOutputTensor({required LoadModelOptions loadModelOptions}) async {
     return _getOutPutTensor(
         loadModelOptions.model, loadModelOptions.inputPrecision);
   }
