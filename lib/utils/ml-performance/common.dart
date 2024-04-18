@@ -41,9 +41,12 @@ class PerformanceTesterCommon {
   }
 
   DataSet getModelDataSet(Model model) {
+    var mobileNetDataSet = DataSet.imagenet;
     switch (model) {
-      case Model.mobilenet_edgetpu || Model.mobilenetv2:
-        return DataSet.imagenet;
+      case Model.mobilenet_edgetpu:
+        return mobileNetDataSet;
+      case Model.mobilenetv2:
+        return mobileNetDataSet;
       case Model.ssd_mobilenet:
         return DataSet.coco;
       case Model.deeplabv3:
@@ -54,9 +57,12 @@ class PerformanceTesterCommon {
   }
 
   List<int> getInputShape(Model model) {
+    var mobileNetInputShape = [1, 224, 224, 3];
     switch (model) {
-      case Model.mobilenet_edgetpu || Model.mobilenetv2:
-        return [1, 224, 224, 3];
+      case Model.mobilenet_edgetpu:
+        return mobileNetInputShape;
+      case Model.mobilenetv2:
+        return mobileNetInputShape;
       case Model.ssd_mobilenet:
         return [1, 300, 300, 3];
       case Model.deeplabv3:

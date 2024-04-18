@@ -134,6 +134,8 @@ class ResultSender {
       case false:
         IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
         return iosInfo.utsname.machine;
+      default:
+        throw Exception("Unknown platform");
     }
   }
 }
