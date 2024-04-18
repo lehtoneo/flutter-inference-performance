@@ -148,7 +148,7 @@ class ONNXRuntimePerformanceTester
       required input,
       required outputTensor,
       required LoadModelOptions loadModelOptions}) async {
-    return await model.runAsync(OrtRunOptions(), input, model.outputNames);
+    return model.run(OrtRunOptions(), input, model.outputNames);
   }
 
   @override
