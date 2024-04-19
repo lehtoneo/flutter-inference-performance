@@ -44,6 +44,7 @@ class ONNXRuntimePerformanceTester
       case DelegateOption.core_ml:
         sessionOptions.appendCoreMLProvider(CoreMLFlags.useNone);
         break;
+
       case DelegateOption.nnapi:
         sessionOptions.appendNnapiProvider(NnapiFlags.useNone);
         break;
@@ -95,7 +96,7 @@ class ONNXRuntimePerformanceTester
         return tensor;
       } else {
         var tensor = OrtValueTensor.createTensorWithDataList(
-            Float32List.fromList(e as List<double>), [1, ...inputShape]);
+            Float32List.fromList(e as List<double>), [...inputShape]);
         return tensor;
       }
     }).toList();
