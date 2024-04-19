@@ -4,6 +4,7 @@ import 'package:inference_test/pages/home.dart';
 import 'package:inference_test/pages/onnx_test.dart';
 import 'package:inference_test/pages/tf_test.dart';
 import 'package:inference_test/utils/data.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,6 +28,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future _checkCondition() async {
+    await WakelockPlus.enable();
     // Implement your condition check logic here
     bool isReachable =
         await DataService.isReachable(); // Result of the condition check
