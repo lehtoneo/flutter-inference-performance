@@ -119,7 +119,7 @@ class _PerformanceTesterWidgetState extends State<PerformanceTesterWidget> {
           Text("Current run $currentRun"),
           ElevatedButton(
             onPressed: _runAll,
-            child: const Text("Run all"),
+            child: const Text("Run all speed tests"),
           ),
           Text("Select options:"),
           LoadModelOptionsSelector(
@@ -134,8 +134,12 @@ class _PerformanceTesterWidgetState extends State<PerformanceTesterWidget> {
           Text("Run  $_run / $_runTimes times"),
           ElevatedButton(
             onPressed: () => _runInference(_loadModelOptions),
-            child: const Text("Run"),
+            child: const Text("Run one speed test"),
           ),
+          ElevatedButton(
+              onPressed: () => performanceTester.runResourcesTest(
+                  loadModelOptions: _loadModelOptions),
+              child: const Text("Run resources test")),
           if (_error != null)
             Text(
               "Error: $_error",

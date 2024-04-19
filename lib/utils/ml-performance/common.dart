@@ -107,6 +107,38 @@ abstract class PerformanceTester<ModelType, InputType, OutputTensorType>
     extends PerformanceTesterCommon {
   String get libraryName;
 
+  Future<void> runResourcesTest({
+    required LoadModelOptions loadModelOptions,
+  }) async {
+    var model = await loadModelAsync(loadModelOptions);
+
+    var inputs = await getFormattedInputs(
+        loadModelOptions: loadModelOptions,
+        model: model,
+        skip: 0,
+        batchSize: 1);
+
+    var input = inputs.first;
+
+    var times = 1000;
+
+    while (times > 0) {
+      var outputTensor = getOutputTensor(loadModelOptions: loadModelOptions);
+
+      var output = await runInference(
+          model: model,
+          input: input,
+          outputTensor: outputTensor,
+          loadModelOptions: loadModelOptions);
+
+      await onAfterInputRun(input: input, output: output);
+
+      times--;
+    }
+
+    await closeModel(model);
+  }
+
   Future<MLInferencePerformanceResult> testPerformance({
     required LoadModelOptions loadModelOptions,
   }) async {
