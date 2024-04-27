@@ -272,11 +272,10 @@ abstract class PerformanceTester<ModelType, InputType, OutputTensorType>
 
       await onAfterInputRun(input: input, output: output);
     } catch (e) {
+      closeModel(model);
       print("Inference failed: $e");
       rethrow;
     }
-
-    closeModel(model);
   }
 
   Future<dynamic> _runInferenceWithTimeout({
